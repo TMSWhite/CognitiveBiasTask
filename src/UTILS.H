@@ -29,6 +29,14 @@ extern	short	SCREENmaxX, SCREENmaxY;
 #define	TEXT_BOLD			0x0f
 #define	TEXT_NORMAL			0x07
 
+#define	TEXT_LEFT		0
+#define	TEXT_RIGHT		1
+#define	TEXT_CENTER		2
+#define	TEXT_NEXT		3
+#define	TEXT_BACKSPACE	4
+
+void	Gprint(char *msg, short y, short xpos, short color);
+
 
 short	GRAPHICSsetup(short on);
 short	INPUTsetup(short type);
@@ -64,9 +72,6 @@ void	EVENTget_mouse(short *x, short *y, short *buttons);
 void	EVENTflush_all(void);
 short	KeyPressed(void);
 unsigned GetAKey(void);
-
-void	WriteAttrString(char *msg, short x, short y, short style);
-void	Gprint(short x, short y, char *msg, short color);
 
 
 /*****************************************/

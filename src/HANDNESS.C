@@ -19,8 +19,6 @@ static char *BriggsQuest[] = {
 	"12. To unscrew the lid of a jar",
 };
 
-static char	*Gets(char *buf);
-static void BlankLine(int y);
 
 int	GetName(void)
 {
@@ -33,11 +31,11 @@ int	GetName(void)
 
 	Cls();
 	sprintf(buf,"Neuropsychological Testing");
-	WriteAttrString(buf,(40 - strlen(buf)/2),1,TEXT_BOLD);
+	Gprint(buf,1,TEXT_CENTER,TEXT_BOLD);
 
 	while(!ok) {
 		BlankLine(2);
-		WriteAttrString("What is your full name? [last, first]: ",1,2,TEXT_NORMAL);
+		Gprint("What is your full name?: ", 2,TEXT_LEFT,TEXT_NORMAL);
 		Gets(user_name);
 		len=strlen(user_name);
 		for (n=0;n<len;++n) {
@@ -104,12 +102,12 @@ void	GetHandednessInfo(void)
 		familyH[5] = 0;
 
 	Cls();
-	WriteAttrString("**On the remaining 12 questions, please indicate hand preference:**",1,1,TEXT_NORMAL);
-	WriteAttrString("  0 = Always Left",1,2,TEXT_NORMAL);
-	WriteAttrString("  1 = Usually Left",1,3,TEXT_NORMAL);
-	WriteAttrString("  2 = No Preference",1,4,TEXT_NORMAL);
-	WriteAttrString("  3 = Usually Right",1,5,TEXT_NORMAL);
-	WriteAttrString("  4 = Always Right",1,6,TEXT_NORMAL);
+	Gprint("On the remaining 12 questions please indicate hand preference",1,TEXT_CENTER,TEXT_NORMAL);
+	Gprint("0 = Always Left",2,TEXT_LEFT,TEXT_NORMAL);
+	Gprint("1 = Usually Left",3,TEXT_LEFT,TEXT_NORMAL);
+	Gprint("2 = No Preference",4,TEXT_LEFT,TEXT_NORMAL);
+	Gprint("3 = Usually Right",5,TEXT_LEFT,TEXT_NORMAL);
+	Gprint("4 = Always Right",6,TEXT_LEFT,TEXT_NORMAL);
 
 	for (n=0;n<12;++n) {
 		indivH[n] = GetInt(n+8,BriggsQuest[n],0,4);
@@ -159,7 +157,7 @@ int	GetBool(int y, char *msg, char *choices)
 	while(!ok) {
 		BlankLine(y);
 		sprintf(buf,"%s? (%c/%c): ", msg, choices[0], choices[1]);
-		WriteAttrString(buf,1,y,TEXT_NORMAL);
+		Gprint(buf,y,TEXT_LEFT,TEXT_NORMAL);
 
 		if (!Gets(buf))
 			continue;
@@ -194,7 +192,7 @@ int	GetInt(int y, char *msg, int min, int max)
 			sprintf(buf,"%s? (>=%i): ", msg, min);
 		if (min == max) 
 			sprintf(buf,"%s?: ", msg);
-		WriteAttrString(buf,1,y,TEXT_NORMAL);
+		Gprint(buf,y,TEXT_LEFT,TEXT_NORMAL);
 
 		if (!Gets(buf))
 			continue;
@@ -234,7 +232,7 @@ char	*Gets(char *buf)
 				if (count == 0)
 					break;
 				--count;
-				WriteAttrString(" ",-2,0, TEXT_NORMAL);
+				Gprint(" ",0,TEXT_BACKSPACE,TEXT_NORMAL);
 				break;
 			case K_ESCAPE:
 				return "";
@@ -243,7 +241,7 @@ char	*Gets(char *buf)
 				return buf;
 			default:
 				buf[count++] = (char) key;
-				WriteAttrString(keystr, 0, 0, TEXT_NORMAL);
+				Gprint(keystr,0,TEXT_NEXT,TEXT_NORMAL);
 				break;
 		}
 	}
@@ -257,7 +255,7 @@ void BlankLine(int y)
 	memset(blank,' ', 110);
 	blank[110] = '\0';
 	
-	WriteAttrString(blank,1,y,TEXT_NORMAL);
+	Gprint(blank,y,TEXT_LEFT,TEXT_NORMAL);
 }
 
 

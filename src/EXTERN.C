@@ -71,10 +71,10 @@ pint	_most_similar=NULL;
 pint	_match_min=NULL;
 pint	_match_max=NULL;
 
-pint	_sameness;		// won't this be the same as _matches?
-pint	_items;			// which have been used
-pint	_Orig_stim;		// list of stimuli by item number
-pint	_stim_copy;			// copy of stimuli item numbers for randomization
+pint	_sameness=NULL;		// won't this be the same as _matches?
+pint	_items=NULL;			// which have been used
+pint	_Orig_stim=NULL;		// list of stimuli by item number
+pint	_stim_copy=NULL;			// copy of stimuli item numbers for randomization
 
 pint	_shape=NULL;
 pint	_color=NULL;

@@ -26,13 +26,15 @@ void main(int argc, char **argv)
 #ifdef	USING_MAC
 	}
 #endif
+
+	SCREENmode(1);
 	
 	if (verbose) {
 		char *title="CBT - Neuropsychological Testing";
 		char *to_start = "Press a key to begin";
 		Cls();
-		WriteAttrString(title,(40-strlen(title)/2),12,TEXT_BOLD);
-		WriteAttrString(to_start,(40-strlen(to_start)/2),14,TEXT_NORMAL);
+		Gprint(title,12,TEXT_CENTER,TEXT_BOLD);
+		Gprint(to_start,14,TEXT_CENTER,TEXT_NORMAL);
 		GetAKey();
 	}
 
@@ -104,7 +106,7 @@ void	run_trials(void)
 	if (!show_instructions()) 
 		return;	// allows early abort via ESCAPE
 
-	SCREENmode(1);
+//	SCREENmode(1);
 
 	/* Must reset response arrays each time new exp is run **/
 	for (n=0;n<num_trials;++n){
@@ -121,14 +123,14 @@ void	run_trials(void)
 		if (run_trial(0)==-1)	// ESCAPE pressed
 			break;
 	}
-	if (!immediacy) {
-		SCREENmode(0);
-	}
+//	if (!immediacy) {
+//		SCREENmode(0);
+//	}
 
 	if (ask_awareness_of_patterns && (choice_type == CHOOSE_PREFERENCE || choice_type == CHOOSE_PREF_CONTROL)) {
 		if (GetBool(1,"Were you aware of any conscious pattern(s) to your preferences","ny")) {
-			printf("Please briefly describe them\n->");
-			gets(selfeval_str);
+			Gprint("Please briefly describe them\n->",2,TEXT_CENTER,TEXT_NORMAL);
+			Gets(selfeval_str);
 		}
 	}
 
@@ -217,37 +219,37 @@ int	show_instructions(void)
 
 	if (verbose) {
 		Cls();
-		WriteAttrString("INSTRUCTIONS",34,1,TEXT_HIGHLIGHTED);
-		WriteAttrString("You will see cards that have different designs on them.  The designs",1,3,TEXT_NORMAL);
+		Gprint("INSTRUCTIONS",1,TEXT_CENTER,TEXT_HIGHLIGHTED);
+		Gprint("You will see cards that have different designs on them.  The designs",3,TEXT_LEFT,TEXT_NORMAL);
 		if (choice_type == CHOOSE_PREF_CONTROL) {
-			WriteAttrString("may vary in several respects.  Of the cards shown, choose the one you",1,4,TEXT_NORMAL);
-			WriteAttrString("like the most.",1,5,TEXT_BOLD);
+			Gprint("may vary in several respects.  Of the cards shown, choose the one you",4,,TEXT_LEFT,TEXT_NORMAL);
+			Gprint("like the most.",5,TEXT_LEFT,TEXT_BOLD);
 		}
 		else {
-			WriteAttrString("may vary in several respects.  After looking at the top card,",1,4,TEXT_NORMAL);
+			Gprint("may vary in several respects.  After looking at the top card,",4,TEXT_LEFT,TEXT_NORMAL);
 			sprintf(buf,"%i new cards will appear below it.  Please choose the one card from the",(num_stimuli-1));
-			WriteAttrString(buf,1,5,TEXT_NORMAL);
+			Gprint(buf,5,TEXT_LEFT,TEXT_NORMAL);
 		}
 
 		switch(choice_type) {
 			case CHOOSE_PREFERENCE:
-//				WriteAttrString("Please choose the card from the new set which you ",1,5,TEXT_NORMAL);
-				WriteAttrString("new set which you ", 1, 6, TEXT_NORMAL);
-				WriteAttrString("like the best.",0,0,TEXT_BOLD);
+//				Gprint("Please choose the card from the new set which you ",5,TEXT_LEFT,TEXT_NORMAL);
+				Gprint("new set which you ", 6,TEXT_LEFT,TEXT_NORMAL);
+				Gprint("like the best.",0,TEXT_NEXT,TEXT_BOLD);
 				demo_msg0 = "you like the best";
 				break;
 			case CHOOSE_SAME:
-				WriteAttrString("new cards which is ", 1, 6, TEXT_NORMAL);
-//				WriteAttrString("Please choose the card from the new set which is ",1,5,TEXT_NORMAL);
-				WriteAttrString("most similar",0,0,TEXT_BOLD);
-				WriteAttrString(" to the first card.",0,0,TEXT_NORMAL);
+				Gprint("new cards which is ", 6, TEXT_LEFT,TEXT_NORMAL);
+//				Gprint("Please choose the card from the new set which is ",5,TEXT_LEFT,TEXT_NORMAL);
+				Gprint("most similar",0,TEXT_NEXT,TEXT_BOLD);
+				Gprint(" to the first card.",0,TEXT_NEXT,TEXT_NORMAL);
 				demo_msg0 = "MOST SIMILAR to the one above";
 				break;
 			case CHOOSE_DIFFERENT:
-				WriteAttrString("new cards which is ", 1, 6, TEXT_NORMAL);
-//				WriteAttrString("Please choose the card from the new set which is ",1,5,TEXT_NORMAL);
-				WriteAttrString("most different",0,0,TEXT_BOLD);
-				WriteAttrString(" from the first card.",0,0,TEXT_NORMAL);
+				Gprint("new cards which is ", 6, TEXT_LEFT,TEXT_NORMAL);
+//				Gprint("Please choose the card from the new set which is ",5,TEXT_LEFT,TEXT_NORMAL);
+				Gprint("most different",0,TEXT_NEXT,TEXT_BOLD);
+				Gprint(" from the first card.",0,TEXT_NEXT,TEXT_NORMAL);
 				demo_msg0 = "MOST DIFFERENT from the one above";
 				break;
 			case CHOOSE_PREF_CONTROL:
@@ -255,14 +257,12 @@ int	show_instructions(void)
 				break;
 		}
 		if (choice_type == CHOOSE_PREFERENCE || choice_type == CHOOSE_PREF_CONTROL) {
-			WriteAttrString("There are no \"correct\" or \"incorrect\" responses.  Your choice",1,8,TEXT_NORMAL);
-			WriteAttrString("is entirely up to you.",1,9,TEXT_NORMAL);
+			Gprint("There are no \"correct\" or \"incorrect\" responses.  Your choice",8,TEXT_LEFT,TEXT_NORMAL);
+			Gprint("is entirely up to you.",9,TEXT_LEFT,TEXT_NORMAL);
 		}
-		WriteAttrString("Please try to make your choices rather quickly.",1,11,TEXT_NORMAL);
+		Gprint("Please try to make your choices rather quickly.",11,TEXT_LEFT,TEXT_NORMAL);
 
-		WriteAttrString("When making selection,",1,14,TEXT_NORMAL);
-		WriteAttrString("select UPPER card by:",3,15,TEXT_NORMAL);
-		WriteAttrString("select LOWER card by:",3,16,TEXT_NORMAL);
+		Gprint("When making selection,",14,TEXT_LEFT,TEXT_NORMAL);
 		switch(input_type) {
 			case INPUT_NUM_KEYS:
 				demo_top_select0="pressing number '1'";
@@ -300,21 +300,23 @@ int	show_instructions(void)
 				demo_bottom_select0="pressing GREY-ENTER key";
 				break;
 		}
-		WriteAttrString(demo_top_select0,26,15,TEXT_NORMAL);
-		WriteAttrString(demo_bottom_select0,26,16,TEXT_NORMAL);
+		Gprint("  select UPPER card by:",15,TEXT_LEFT,TEXT_NORMAL);
+		Gprint(demo_top_select0,15,TEXT_NEXT,TEXT_NORMAL);
+		Gprint("  select LOWER card by:",16,TEXT_LEFT,TEXT_NORMAL);
+		Gprint(demo_bottom_select0,16,TEXT_NEXT,TEXT_NORMAL);
 
-		WriteAttrString("Press F1 for help", 1, 25, TEXT_NORMAL);
-		WriteAttrString("Press SPACE to start", 60, 25, TEXT_BOLD);
+		Gprint("Press F1 for help", 25, TEXT_LEFT,TEXT_NORMAL);
+		Gprint("Press SPACE to start", 25, TEXT_RIGHT,TEXT_BOLD);
 
 		while (!ok) {
 			i = GetAKey();
 			if (i == K_F1) {
-				SCREENmode(1);
+//				SCREENmode(1);
 //				if (use_timer)
 //					TIMERzero_clock();
 				while(run_trial(1)==0)
 					;
-				SCREENmode(0);
+//				SCREENmode(0);
 				return show_instructions();
 			}
 			if (i == K_ESCAPE)
@@ -328,11 +330,11 @@ int	show_instructions(void)
 		GetAKey();
 	}
 
-	SCREENmode(1);
+//	SCREENmode(1);
 
 	if (!did_warmup && num_warmup_trials > 0) {
 		if (verbose_warmup) {
-			Gprint(20,12,"Press SPACE to try a few practice rounds", WHITE);
+			Gprint("Press SPACE to try a few practice rounds",12,TEXT_CENTER, WHITE);
 
 			if (use_ega)
 				SCREENpage_flip(0);	// so displayed
@@ -373,7 +375,7 @@ int	show_instructions(void)
 				SCREENpage_flip(0);	// so displayed
 			else
 				Cls();
-			Gprint(19,12,"Great!  Now press SPACE to start experiment", WHITE);
+			Gprint("Great!  Now press SPACE to start experiment",12,TEXT_CENTER, WHITE);
 			if (use_ega)
 				SCREENpage_flip(0);	// so displayed
 
@@ -398,6 +400,7 @@ void	CalibrateSaturation(void)
 	char	r,g,b;
 	long	lcolor;
 	int	change_color=1;
+	char	buf[80];
 	
 	num_stimuli=4;
 	num_choices_per_category=2;
@@ -411,10 +414,10 @@ void	CalibrateSaturation(void)
 
 	Long2RGB(_palette[current],&r,&g,&b);
 	RGBshow_vals(current, r, g, b);
-	Gprint(1,3,"left/right arrows change current", WHITE);
-	Gprint(1,4,"RGB up/down with keypad", WHITE);
-	Gprint(1,5,"GREY+/- change step size",WHITE);
-	Gprint(1,6,"ESCAPE to save values", WHITE);
+	Gprint("left/right arrows change current",3,TEXT_LEFT, WHITE);
+	Gprint("RGB up/down with keypad",4, TEXT_LEFT, WHITE);
+	Gprint("GREY+/- change step size",5, TEXT_LEFT,WHITE);
+	Gprint("ESCAPE to save values",6, TEXT_LEFT, WHITE);
 
 	while (1) {
 		if (EVENTallow() != EVENT_keyboard)
@@ -423,10 +426,12 @@ void	CalibrateSaturation(void)
 		key = GetAKey();
 		switch(key) {
 			case K_ESCAPE:
-				SCREENmode(0);
-				printf("Palette values\n");
-				for (n=0;n<(num_stimuli+2);++n) 
-					printf("color %2i:  %8lxH\n", n, _palette[n]);
+//				SCREENmode(0);
+				Gprint("Palette values",1,TEXT_LEFT,TEXT_NORMAL);
+				for (n=0;n<(num_stimuli+2);++n) {
+					sprintf(buf,"color %2i:  %8lxH\n", n, _palette[n]);
+					Gprint(buf,(n+2),TEXT_LEFT,TEXT_NORMAL);
+				}
 				return;
 				break;
 			case K_LEFTARROW:
@@ -504,7 +509,7 @@ void	RGBshow_vals(int current, char r, char g, char b)
 	char	buf[40];
 	sprintf(buf,"[#%i] (%2x,%2x,%2x) (unit=%i)",
 		current, (int) r, (int) g, (int) b, unit);
-	Gprint(1,1,buf,WHITE);
+	Gprint(buf,1, TEXT_LEFT,WHITE);
 
 }
 
@@ -569,7 +574,7 @@ int	run_trial(int demo)
 		if (demo) {
 			draw(0,tdemo[0][0],tdemo[0][1],tdemo[0][2],tdemo[0][3],tdemo[0][4],0);
 			if (demo==1) {
-				Gprint(1,3,"First look at this card ->", WHITE);
+				Gprint("First look at this card ->",3, TEXT_LEFT, WHITE);
 			}
 		}
 		else
@@ -603,11 +608,11 @@ int	run_trial(int demo)
 			draw(n,tdemo[n][0],tdemo[n][1],tdemo[n][2],tdemo[n][3],tdemo[n][4],0);
 		if (demo==1) {
 			sprintf(buf,demo_msg,(choice_type==CHOOSE_PREF_CONTROL)?"":"then ",demo_msg0);
-			Gprint((40 - strlen(buf)/2),10, buf, WHITE);
+			Gprint( buf,10,TEXT_CENTER,WHITE);
 			sprintf(buf,demo_top_select,demo_top_select0);
-			Gprint(1,12,buf,WHITE);
+			Gprint(buf,12, TEXT_LEFT,WHITE);
 			sprintf(buf,demo_bottom_select,demo_bottom_select0);
-			Gprint(1,22,buf,WHITE);
+			Gprint(buf,22, TEXT_LEFT,WHITE);
 		}
 	}
 	else {
@@ -643,7 +648,7 @@ int	run_trial(int demo)
 			if (MS_TIMERcheck(3) == 0L) {
 				// if no response by then, tell what needs to be done
 				char *msg = "Please make a choice to show that you understand";
-				Gprint((40-strlen(msg)/2),15,msg,LIGHTMAGENTA);
+				Gprint(msg,15,TEXT_CENTER,LIGHTMAGENTA);
 				if (use_ega)
 					SCREENpage_flip(0);
 				MS_TIMERset(3,2000);
@@ -787,7 +792,7 @@ int	run_trial(int demo)
 
 error_key:
 		if (beep_on_error_key)
-			printf("\a");
+			Gprint("\a",1,TEXT_LEFT,TEXT_NORMAL);
 	}
 
 setup_next_trial:

@@ -313,6 +313,7 @@ char	*Time2str(void)
 
 void	WriteAttrString(char *msg, short x, short y, short style)
 {
+	/* Needs changing! */
 	int	color;
 	char	blank[111];
 	

@@ -73,6 +73,8 @@ long	MS_TIMERcheck(int id);
 
 int	GetBool(int y, char *msg, char *choices);
 int	GetInt(int y, char *msg, int min, int max);
+char	*Gets(char *buf);
+void BlankLine(int y);
 
 void	CalibrateSaturation(void);
 void	Long2RGB(long lcolor, char *r, char *g, char *b);
