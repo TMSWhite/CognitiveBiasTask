@@ -1,6 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "cbt.h"
 
 /*************** ROUTINES FOR READING INFO FROM CONFIG FILE ***************/
 

@@ -1,5 +1,4 @@
-#include <stdio.h>
-#include <malloc.h>
+#include "cbt.h"
 
 
 /********************************************/
@@ -319,8 +318,8 @@ void store_stimuli(void)
 		return;
 	}
 	fprintf(id,"Name: %s\n", user_name);
-	fprintf(id,"Date: %s\n", _strdate(buf));
-	fprintf(id,"Time: %s\n\n", _strtime(buf));
+//	fprintf(id,"Date: %s\n", _strdate(buf));
+//	fprintf(id,"Time: %s\n\n", _strtime(buf));
 
 	fprintf(id,global_msg);
 	fprintf(id,global_str,num_trials,num_stimuli,num_categories,
@@ -381,8 +380,8 @@ void store_stimuli_as_txt(void)
 		return;
 	}
 	fprintf(id,"Name: %s\n", user_name);
-	fprintf(id,"Date: %s\n", _strdate(buf));
-	fprintf(id,"Time: %s\n\n", _strtime(buf));
+//	fprintf(id,"Date: %s\n", _strdate(buf));
+//	fprintf(id,"Time: %s\n\n", _strtime(buf));
 	fprintf(id,msg);
 
 	for (n=0,here=0;n<num_trials;++n) {
@@ -418,8 +417,8 @@ void	analyze(char *dest, int time_now)
 	}
 
 	fprintf(id,"Name: %s\n", user_name);
-	fprintf(id,"Date: %s\n", (time_now) ? _strdate(buf) : date_str);
-	fprintf(id,"Time: %s\n\n", (time_now) ? _strtime(buf) : time_str);
+//	fprintf(id,"Date: %s\n", (time_now) ? _strdate(buf) : date_str);
+//	fprintf(id,"Time: %s\n\n", (time_now) ? _strtime(buf) : time_str);
 
 	if (!played_before)
 		PrintHandedness(id);

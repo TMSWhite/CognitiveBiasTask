@@ -1,8 +1,8 @@
+#include "cbt.h"
 
 /*******************************************************************/
 /************************* Handedness Info *************************/
 /*******************************************************************/
-int	GetInt(int y, char *msg, int min, int max);
 
 static char *BriggsQuest[] = {
 	"1.  To write a letter legibly",
@@ -214,6 +214,7 @@ int	GetInt(int y, char *msg, int min, int max)
 
 void BlankLine(int y)
 {
+/**
 	union		REGS	reg;
 
 	CurMov(1,y);
@@ -226,6 +227,10 @@ void BlankLine(int y)
 	int86(0x10,&reg,&reg);
 
 	CurMov(1,y);
+**/
 }
+
+void	Cls(void){}
+
 
 
