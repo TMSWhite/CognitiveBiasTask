@@ -1,0 +1,19 @@
+all: MINI.exe
+
+CFLAGS=-c /W3 /AL /G2 /Gs /Od
+
+LIBS=oldnames+llibce+graphics
+LFLAGS=/BATCH /NOD /FAR /PACKC /NOE
+LINKER=link
+
+
+OBJS  = MINI.obj
+
+MINI.exe: $(OBJS)
+	@$(LINKER) @<<MINI.lrf
+$(OBJS: =+^
+)
+MINI $(LFLAGS) /ST:15000
+MINI
+$(LIBS);
+<<NOKEEP
