@@ -318,8 +318,8 @@ void store_stimuli(void)
 		return;
 	}
 	fprintf(id,"Name: %s\n", user_name);
-//	fprintf(id,"Date: %s\n", _strdate(buf));
-//	fprintf(id,"Time: %s\n\n", _strtime(buf));
+	fprintf(id,"Date: %s\n", Date2str());
+	fprintf(id,"Time: %s\n\n", Time2str());
 
 	fprintf(id,global_msg);
 	fprintf(id,global_str,num_trials,num_stimuli,num_categories,
@@ -380,8 +380,8 @@ void store_stimuli_as_txt(void)
 		return;
 	}
 	fprintf(id,"Name: %s\n", user_name);
-//	fprintf(id,"Date: %s\n", _strdate(buf));
-//	fprintf(id,"Time: %s\n\n", _strtime(buf));
+	fprintf(id,"Date: %s\n", Date2str());
+	fprintf(id,"Time: %s\n\n", Time2str());
 	fprintf(id,msg);
 
 	for (n=0,here=0;n<num_trials;++n) {
@@ -417,8 +417,8 @@ void	analyze(char *dest, int time_now)
 	}
 
 	fprintf(id,"Name: %s\n", user_name);
-//	fprintf(id,"Date: %s\n", (time_now) ? _strdate(buf) : date_str);
-//	fprintf(id,"Time: %s\n\n", (time_now) ? _strtime(buf) : time_str);
+	fprintf(id,"Date: %s\n", (time_now) ? Date2str() : date_str);
+	fprintf(id,"Time: %s\n\n", (time_now) ? Time2str() : time_str);
 
 	if (!played_before)
 		PrintHandedness(id);
@@ -987,7 +987,7 @@ int	MS_TIMERset(int id, long ms)
 		return 1;
 
 	if (id < 0 || id >= MAX_MS_TIMERS || ms < 0L) return 0;
-	MSTimers[id].final = TIMERms_counter+ms;	// tracks final value
+	MSTimers[id].final = TIMERget_ms()+ms;	// tracks final value
 	MSTimers[id].active = 1;
 	return 1;
 }
@@ -1000,7 +1000,7 @@ long	MS_TIMERcheck(int id)
 		return 0;
 
 	if (id < 0 || id >= MAX_MS_TIMERS || !MSTimers[id].active) return 0L;
-	left = MSTimers[id].final - TIMERms_counter;
+	left = MSTimers[id].final - TIMERget_ms();
 	if (left < 0L) {
 		MSTimers[id].active = 0;
 		left = 0L;

@@ -2,6 +2,8 @@
 
 /*************** ROUTINES FOR READING INFO FROM CONFIG FILE ***************/
 
+#define	NUM(x)	((sizeof(x)/sizeof((x)[0])))
+
 static char	*CBTparams[] = {
 	"verbose",
 	"multi_exp",
@@ -32,6 +34,19 @@ static char	*CBTparams[] = {
 	"immediate_start",
 	"cleanup_delay",
 };
+
+char	*ExpType[] = {
+	"Preference", "Most_Different", "Most_Similar", "Preference_Control"
+};
+
+static	char	*InputType[] = {
+	"Num_Keys", "Mouse_Mvt", "Mouse_Buttons", "Joystick_Mvt",
+	"Joystick_buttons", "User_Keys", "Arrow_Keys", "Plus_Enter"
+};
+
+static char	*ColorFromType[] = {"From_STM_File", "From_CFG_File" };
+
+static	char	*RandType[] = { "Do_Not", "Fully_Mixed", "Within_Block"};
 
 
 int	CBTparse(int index, int argc, char **argv)
@@ -68,7 +83,7 @@ int	CBTparse(int index, int argc, char **argv)
 					randomize[n] = 0;
 			}
 			break;
-		case 15: datafile = strdup(argv[0]); break;
+		case 15: datafile = Strdup(argv[0]); break;
 		case 16:
 			/** Parse color codes **/
 			for (n=0;n<argc;++n) {
@@ -81,7 +96,7 @@ int	CBTparse(int index, int argc, char **argv)
 			break;
 		case 17: num_trials = atoi(argv[0]); break;
 		case 18: analysis_blocks = atoi(argv[0]); break;
-		case 19: source_file = strdup(argv[0]); break;
+		case 19: source_file = Strdup(argv[0]); break;
 		case 20:
 			for (n=0;n<argc && n < MAX_MULTI_EXP; ++n) 
 				practice_rounds[n] = atoi(argv[n]);
@@ -110,28 +125,23 @@ int	CBTparse(int index, int argc, char **argv)
 #define	CONFIG_MAX_FILENAME_LEN		78
 #define	CONFIG_MAX_ARGS				30			// max arguments to any tag
 
-FILE	*CONFIGfd;
-char	CONFIGbuf[CONFIG_MAX_BUF_LEN+1];
-int	CONFIGline;
-int	CONFIGerrs;
+static	FILE	*CONFIGfd;
+static	char	CONFIGbuf[CONFIG_MAX_BUF_LEN+1];
+static	int	CONFIGline;
+static	int	CONFIGerrs;
 
 int	CONFIGread_file(char *config_file)
 {
 	register	int	n;
 	char	*slist[2];
 	char	**s = &slist[1];
-	int	num_entries;
-	char	**conf_menu = CBTparams;
 
 	CONFIGerrs = 0;
-
-	for (n=0;conf_menu[n][0] != '\0';++n);
-	num_entries = n;
 
 	if ((CONFIGfd = fopen(config_file,"r+t")) == (FILE *) NULL) 
 		return 0;
 
-	if (!CONFIGparse_lines(num_entries, conf_menu)) {
+	if (!CONFIGparse_lines(NUM(CBTparams), CBTparams)) {
 		fclose(CONFIGfd);
 		return 0;
 	}
@@ -298,7 +308,7 @@ end_of_file:
 int CONFIGistag(char *string, int num_entries, char **conf_menu, int *which_var)
 {
 	for (*which_var=0;*which_var<num_entries;++*which_var){
-		if (stricmp(string,conf_menu[*which_var]) == 0) {
+		if (Stricmp(string,conf_menu[*which_var]) == 0) {
 			return(1);
 		}
 	}
@@ -310,7 +320,7 @@ int CONFIGisentry(char *string, int num_entries, char **entries)
 	/* Returns -1 if not found, else index within array "entries" */
 	int	n;
 	for (n=0;n<num_entries;++n){
-		if (stricmp(string,entries[n]) == 0) {
+		if (Stricmp(string,entries[n]) == 0) {
 			return n;
 		}
 	}
@@ -323,3 +333,28 @@ int CONFIGisentry(char *string, int num_entries, char **entries)
 	return -1;
 }
 
+
+int	Stricmp(char *x, char *y)
+{
+	char *a, *b;
+	int	n=0;
+	
+	a = Strdup(x);
+	b = Strdup(y);
+	if (!a || !b)
+		goto cleanup;
+		
+	for (n=0;n<strlen(a);++n)
+		a[n] = tolower(a[n]);
+	for (n=0;n<strlen(b);++n)
+		b[n] = tolower(b[n]);
+		
+	n = strcmp(a,b);
+cleanup:
+
+	if (a)
+		free(a);
+	if (b)
+		free(b);
+	return n;
+}

@@ -3,19 +3,34 @@
 
 /***************** START OF CODE ************/
 
+#define	USING_MAC
+
 void main(int argc, char **argv)
 {
 	int	cycle;
+	
+	if (!GRAPHICSsetup(1))
+		return;
 
-	init_palette();
+	PALETTEsetup(_palette);
+	
+#ifdef	USING_MAC
+	{
+		static	char *argv[] = { "Mac-CBT", "F", "cbt.cfg" };
+		int		argc = 2;
+#endif
 
 	if (!parse_args(argc,argv))
-		return;
+		goto shutdown;
+		
+#ifdef	USING_MAC
+	}
+#endif
 	
 	if (verbose) {
 		char *title="CBT - Neuropsychological Testing";
 		char *to_start = "Press a key to begin";
-		_clearscreen(0);
+		Cls();
 		WriteAttrString(title,(40-strlen(title)/2),12,TEXT_BOLD);
 		WriteAttrString(to_start,(40-strlen(to_start)/2),14,TEXT_NORMAL);
 		GetAKey();
@@ -30,10 +45,18 @@ void main(int argc, char **argv)
 
 	/* For multi exps, assumes that you want to use exactly the same
 		order each time.  To re-order, run from scratch several times */
+		
+	if (use_timer) {
+		if (!TIMERsetup(1)) {
+			if (verbose) {
+				printf("Unable to initialize Timer\n");
+				goto shutdown;
+			}
+		}
+	}
 
-	if (all_immediate) {
-		if (use_timer)
-			CLOCKbind(CLOCKcounter,CLOCK_RATE);
+	if (all_immediate) {	// what is this for?
+		TIMERzero_clock();
 	}
 
 
@@ -50,24 +73,25 @@ void main(int argc, char **argv)
 			MS_TIMERset(0,0);	// remove initial delay if not needed
 		run_trials();
 	}
-
-	if (all_immediate){
-		if (use_timer)
-			CLOCKunbind();
+	
+	if (use_timer) {
+		if (cleanup_delay)
+			MS_TIMERset(0,cleanup_delay);
+		else
+			MS_TIMERset(0,0);
 	}
+	
+shutdown:
 
-	if (cleanup_delay && use_timer) {
-		long	time;
-		CLOCKbind(CLOCKcounter,CLOCK_RATE);
-		time=TIMERms_counter+cleanup_delay;
-		while(TIMERms_counter < time)
-			;
-		CLOCKunbind();
-	}
-
-	SCREENmode(MODE_TEXT);
-
+	SCREENmode(0);
 	cleanup();
+	GRAPHICSsetup(0);
+	
+	if (use_timer) {
+		while(MS_TIMERcheck(0) > 0L)
+			;
+		TIMERsetup(0);
+	}
 
 	if (verbose) printf("Thank you\n");
 }
@@ -80,7 +104,7 @@ void	run_trials(void)
 	if (!show_instructions()) 
 		return;	// allows early abort via ESCAPE
 
-	SCREENmode(MODE_GRAPHICS);
+	SCREENmode(1);
 
 	/* Must reset response arrays each time new exp is run **/
 	for (n=0;n<num_trials;++n){
@@ -88,20 +112,17 @@ void	run_trials(void)
 		_time[n]=0L;
 	}
 
-	if (!immediacy) {
-		if (use_timer)
-			CLOCKbind(CLOCKcounter,CLOCK_RATE);
-	}
+//	if (!immediacy) {	// what is this for?
+//		if (use_timer)
+//			TIMERzero_clock();
+//	}
 
 	for (trial_num=0;trial_num<num_trials;++trial_num) {
 		if (run_trial(0)==-1)	// ESCAPE pressed
 			break;
 	}
 	if (!immediacy) {
-		if (use_timer)
-			CLOCKunbind();
-
-		SCREENmode(MODE_TEXT);
+		SCREENmode(0);
 	}
 
 	if (ask_awareness_of_patterns && (choice_type == CHOOSE_PREFERENCE || choice_type == CHOOSE_PREF_CONTROL)) {
@@ -118,13 +139,76 @@ void	run_trials(void)
 	analyze(buf,1);
 }
 
+int	parse_args(int argc, char **argv)
+{
+	/** to make my life easier for adding stuff **/
+	char	type = *argv[1];
+	long	lcolor;
+	int	num_args;
+	int	n;
+	
+	if (argc == 1)
+		goto usage_msg;
+
+	switch(type) {
+		case 'c':
+		case 'C':
+			/** Parse color codes **/
+			num_args=1;
+			for (n=num_args+1;n<argc;++n) {
+				if (n-num_args > 15)	// max of 16 colors
+					break;
+				if (sscanf(argv[n],"%8lxH",&lcolor) == 1) {
+					_palette[n-num_args] = lcolor;
+				}
+			}
+			CalibrateSaturation();
+			return 0;
+		case 'r':
+		case 'R':
+			if (argc != 5)
+				goto usage_msg;
+			analysis_blocks=atoi(argv[2]);
+			RecomputeAnalysis(argv[3],argv[4]);
+			return 0;
+		case 'f':
+		case 'F':
+			num_args = 3;
+			if (!CONFIGread_file(argv[2]))
+				return 0;
+			if (source_file) {
+				if (!read_stimuli(source_file))
+					return 0;
+			}
+			else {
+				validate_args();
+				if (!init_arrays())
+					return 0;
+				if (!autocreate_stimuli())
+					return 0;
+			}
+			break;
+		default:	goto usage_msg;
+	}
+		
+	return 1;
+
+usage_msg:
+	printf("CBT program accepts these command line arguments:\n\n");
+	printf("\nCBT C [optional color codes]  - lets you calibrate the color saturation\n");
+	printf("\nCBT F config_file             - run experiment(s) according to config_file\n");
+	printf("\nCBT R num_blocks source dest  - recomputes statistics on .DAT file\n");
+
+	return 0;
+}
+
+
 int	show_instructions(void)
 {
 	char	buf[80];
 	int	i;
 	int	ok=0;
 
-	_settextcolor(7);	// NORMAL COLOR
 	trial_num=0;	// so all demos do not fill response arrays
 
 	if (immediacy == 1) {
@@ -132,7 +216,7 @@ int	show_instructions(void)
 	}
 
 	if (verbose) {
-		_clearscreen(0);
+		Cls();
 		WriteAttrString("INSTRUCTIONS",34,1,TEXT_HIGHLIGHTED);
 		WriteAttrString("You will see cards that have different designs on them.  The designs",1,3,TEXT_NORMAL);
 		if (choice_type == CHOOSE_PREF_CONTROL) {
@@ -225,59 +309,54 @@ int	show_instructions(void)
 		while (!ok) {
 			i = GetAKey();
 			if (i == K_F1) {
-				SCREENmode(MODE_GRAPHICS);
-				if (use_timer)
-					CLOCKbind(CLOCKcounter,CLOCK_RATE);
+				SCREENmode(1);
+//				if (use_timer)
+//					TIMERzero_clock();
 				while(run_trial(1)==0)
 					;
-				if (use_timer)
-					CLOCKunbind();
-				SCREENmode(MODE_TEXT);
+				SCREENmode(0);
 				return show_instructions();
 			}
 			if (i == K_ESCAPE)
 				return 0;
 
-			if ((char) i == ' ') {
+			if ((char) i == ' ') 
 				ok = 1;
-				break;
-			}
 		}
 	}
 	else {
 		GetAKey();
 	}
 
-	SCREENmode(MODE_GRAPHICS);
+	SCREENmode(1);
 
 	if (!did_warmup && num_warmup_trials > 0) {
 		if (verbose_warmup) {
-			_settextcolor(15);	// WHITE
-			_settextposition(12,20);
-			_outtext("Press SPACE to try a few practice rounds");
+			Gprint(20,12,"Press SPACE to try a few practice rounds", WHITE);
+
 			if (use_ega)
-				page_flip(0);	// so displayed
+				SCREENpage_flip(0);	// so displayed
 
 			while(1) {
 				i = GetAKey();
 				if (i == K_ESCAPE)
 					break;
 				if (i == K_F1) {
-					if (use_timer)
-						CLOCKbind(CLOCKcounter,CLOCK_RATE);
+//					if (use_timer)
+//						TIMERzero_clock();
+						
 					while(run_trial(1)==0)	// show graphical help
 						;
-					if (use_timer)
-						CLOCKunbind();
+
 				}
 
 				if ((char) i == ' ')
 					break;
 			}
 		}
-		if (use_timer)
-			CLOCKbind(CLOCKcounter,CLOCK_RATE);
-	
+//		if (use_timer)
+//			TIMERzero_clock();
+				
 		/* Require X answered trials in a row */
 		i=0;
 		do {
@@ -289,19 +368,14 @@ int	show_instructions(void)
 		} while(i<num_warmup_trials);
 		did_warmup=1;
 
-		if (use_timer)
-			CLOCKunbind();
-
 		if (verbose_warmup) {
 			if (use_ega)
-				page_flip(0);	// so displayed
+				SCREENpage_flip(0);	// so displayed
 			else
-				_clearscreen(0);
-			_settextcolor(15);	// WHITE
-			_settextposition(12,19);
-			_outtext("Great!  Now press SPACE to start experiment");
+				Cls();
+			Gprint(19,12,"Great!  Now press SPACE to start experiment", WHITE);
 			if (use_ega)
-				page_flip(0);	// so displayed
+				SCREENpage_flip(0);	// so displayed
 
 			while(1) {
 				i = GetAKey();
@@ -330,30 +404,26 @@ void	CalibrateSaturation(void)
 	num_categories=5;
 	use_ega=0;	// so that don't need to double buffer
 
-	SCREENmode(MODE_GRAPHICS);
-
-	_settextcolor(15);	// WHITE
+	SCREENmode(1);
 
 	for (n=0;n<num_stimuli;++n)
 		draw(n,0,n,0,0,0,0);
 
 	Long2RGB(_palette[current],&r,&g,&b);
 	RGBshow_vals(current, r, g, b);
-	_settextposition(3,1);
-	_outtext("left/right arrows change current");
-	_settextposition(4,1);
-	_outtext("RGB up/down with keypad");
-	_settextposition(5,1);
-	_outtext("GREY+/- change step size");
-	_settextposition(6,1);
-	_outtext("ESCAPE to save values");
-
+	Gprint(1,3,"left/right arrows change current", WHITE);
+	Gprint(1,4,"RGB up/down with keypad", WHITE);
+	Gprint(1,5,"GREY+/- change step size",WHITE);
+	Gprint(1,6,"ESCAPE to save values", WHITE);
 
 	while (1) {
+		if (EVENTallow() != EVENT_keyboard)
+			continue;
+			
 		key = GetAKey();
 		switch(key) {
 			case K_ESCAPE:
-				SCREENmode(MODE_TEXT);
+				SCREENmode(0);
 				printf("Palette values\n");
 				for (n=0;n<(num_stimuli+2);++n) 
 					printf("color %2i:  %8lxH\n", n, _palette[n]);
@@ -410,8 +480,7 @@ void	CalibrateSaturation(void)
 
 		lcolor = RGB2Long(r,g,b);
 		_palette[current] = lcolor;
-		_remapallpalette(_palette);
-
+		PALETTEsetup(_palette);
 	}
 }
 
@@ -435,8 +504,8 @@ void	RGBshow_vals(int current, char r, char g, char b)
 	char	buf[40];
 	sprintf(buf,"[#%i] (%2x,%2x,%2x) (unit=%i)",
 		current, (int) r, (int) g, (int) b, unit);
-	_settextposition(1,1);
-	_outtext(buf);
+	Gprint(1,1,buf,WHITE);
+
 }
 
 
@@ -460,9 +529,9 @@ int	run_trial(int demo)
 
 	/** Clear screen and wait a period of time **/
 	if (use_ega)
-		page_flip(1);
+		SCREENpage_flip(1);
 	else
-		_clearscreen(0);
+		Cls();
 
 
 	if (demo) {
@@ -494,15 +563,13 @@ int	run_trial(int demo)
 
 	if (!use_ega)
 		while (MS_TIMERcheck(0) > 0L)
-			;
+			EVENTallow();
 
 	if (choice_type != CHOOSE_PREF_CONTROL) {
 		if (demo) {
 			draw(0,tdemo[0][0],tdemo[0][1],tdemo[0][2],tdemo[0][3],tdemo[0][4],0);
 			if (demo==1) {
-				_settextcolor(15);	// WHITE
-				_settextposition(3,1);
-				_outtext("First look at this card ->");
+				Gprint(1,3,"First look at this card ->", WHITE);
 			}
 		}
 		else
@@ -511,11 +578,11 @@ int	run_trial(int demo)
 
 	if (use_ega) {
 		while (MS_TIMERcheck(0) > 0L)
-			;
-		page_flip(0);
+			EVENTallow();
+		SCREENpage_flip(0);
 	}
 
-	times[0]=TIMERms_counter;
+	times[0]=TIMERget_ms();
 
 	/** Wait inter-stimulus interval, then draw choice cards **/
 	if (choice_type != CHOOSE_PREF_CONTROL) {
@@ -527,7 +594,7 @@ int	run_trial(int demo)
 
 	if (!use_ega)
 		while(MS_TIMERcheck(1) > 0L)
-			;
+			EVENTallow();
 
 	if (demo) {
 		if (use_ega && choice_type != CHOOSE_PREF_CONTROL) 
@@ -536,14 +603,11 @@ int	run_trial(int demo)
 			draw(n,tdemo[n][0],tdemo[n][1],tdemo[n][2],tdemo[n][3],tdemo[n][4],0);
 		if (demo==1) {
 			sprintf(buf,demo_msg,(choice_type==CHOOSE_PREF_CONTROL)?"":"then ",demo_msg0);
-			_settextposition(10,(40-strlen(buf)/2));
-			_outtext(buf);
+			Gprint((40 - strlen(buf)/2),10, buf, WHITE);
 			sprintf(buf,demo_top_select,demo_top_select0);
-			_settextposition(12,1);
-			_outtext(buf);
+			Gprint(1,12,buf,WHITE);
 			sprintf(buf,demo_bottom_select,demo_bottom_select0);
-			_settextposition(22,1);
-			_outtext(buf);
+			Gprint(1,22,buf,WHITE);
 		}
 	}
 	else {
@@ -558,28 +622,15 @@ int	run_trial(int demo)
 
 	if (use_ega) {
 		while(MS_TIMERcheck(1) > 0L)
-			;
-		page_flip(0);
+			EVENTallow();
+		SCREENpage_flip(0);
 	}
 
-	times[1]=TIMERms_counter;
+	times[1]=TIMERget_ms();
 	MS_TIMERset(2,total_ms_on);
 
-	/** Clear keyboard buffer so only post-drawing responses registered **/
-	while(KeyPressed())
-		GetAKey();
 
-	switch(input_type) {
-		case INPUT_MOUSE_MVT:
-		case INPUT_MOUSE_BUT:
-			mouseMoved(&deltaX,&deltaY);	// to re-zero the mouse
-			break;
-		case INPUT_JOY_MVT:
-		case INPUT_JOY_BUT:
-			JoystickMoved(&deltaX, &deltaY);	// to re-zero the joystick
-			break;
-	}
-
+	EVENTflush_all();
 
 	/** Wait for reaction **/
 	while(1) {
@@ -592,15 +643,12 @@ int	run_trial(int demo)
 			if (MS_TIMERcheck(3) == 0L) {
 				// if no response by then, tell what needs to be done
 				char *msg = "Please make a choice to show that you understand";
-				_settextcolor(13);	// LIGHTMAGENTA
-				_settextposition(15,(40-strlen(msg)/2));
-				_outtext(msg);
+				Gprint((40-strlen(msg)/2),15,msg,LIGHTMAGENTA);
 				if (use_ega)
-					page_flip(0);
+					SCREENpage_flip(0);
 				MS_TIMERset(3,2000);
 				while(MS_TIMERcheck(3) > 0L)
-					;
-				_settextcolor(7);	// NORMAL TEXT
+					EVENTallow();
 				F1_init=0;	// in case want to see demo again
 				return 0;	// so know to try this again.
 			}
@@ -610,7 +658,7 @@ int	run_trial(int demo)
 			goto setup_next_trial;
 		}
 				
-		if (KeyPressed()) {
+		if (EVENTallow() == EVENT_keyboard) {
 			/** Allow early abort, but wait appropriate amount of time **/
 			key=GetAKey();
 			if (key == K_ESCAPE) {
@@ -643,8 +691,8 @@ int	run_trial(int demo)
 					goto setup_next_trial;
 				}
 				break;
+/*
 			case INPUT_MOUSE_MVT:
-				/** Only allows for binary choices! **/
 				if (mouseMoved(&deltaX,&deltaY)) {
 					if (demo==1)
 						return 1;
@@ -707,6 +755,7 @@ int	run_trial(int demo)
 				}
 				goto error_key;
 				break;
+*/
 			case INPUT_ARROW_KEYS:
 				if (!key)
 					break;
@@ -723,7 +772,7 @@ int	run_trial(int demo)
 			case INPUT_PLUS_ENTER:
 				if (!key)
 					break;
-				if (!(key == K_GREY_PLUS || key == K_RETURN))
+				if (!(key == K_GREY_PLUS || key == K_ENTER))
 					goto error_key;
 				else {
 					opt = (key == K_GREY_PLUS) ? 1 : 2;
@@ -742,11 +791,11 @@ error_key:
 	}
 
 setup_next_trial:
-	times[2]=TIMERms_counter;	// once response is registered
+	times[2]=TIMERget_ms();	// once response is registered
 	_time[trial_num]=(times[2]-times[1]);
 
 	while(MS_TIMERcheck(2) > 0L)
-		;
+		EVENTallow();
 	MS_TIMERset(0,ms_btwn_trials);
 
 	/** Show which was most similar **/
@@ -774,15 +823,90 @@ setup_next_trial:
 						_filled[here],_pattern[here]);
 				draw(_most_similar[trial_num],0,5,0,1,0,0);
 			}
-			page_flip(0);
+			SCREENpage_flip(0);
 		}
 		else {
 			draw(_most_similar[trial_num],0,5,0,1,0,0);
 		}
 		MS_TIMERset(3,50);
 		while(MS_TIMERcheck(3) > 0L)
-			;
+			EVENTallow();
 	}
 	return (!no_response);
+}
+
+void draw(int position, int shape, int color, int num, int size, int filled,int pattern)
+{
+	float	xcent;
+	float	ycent;
+	float	unit_size;	// size of object: can be absolute or relative
+	float	Dy0;
+	int	col;
+
+	int	n;
+	float	fnum;
+	float	pDsize;		// distance between centers of objects
+	float	fillpct;
+	float	fillsize;
+	int	fillcolor;
+	int	pct;
+	float	aspect_ratio;
+	
+	aspect_ratio = (SCREENmaxX/SCREENmaxY)/BASE_ASPECT_RATIO;
+	if (force_aspect_ratio)
+		aspect_ratio=force_aspect_ratio;
+
+	Dsize = SCREENmaxY /((float) num_stimuli + YSEP_PCT * ((float) num_stimuli+(float)1.+YSEP_INC));
+	Dysep = (YSEP_PCT * Dsize);
+	Dx0= (SCREENmaxX-Dsize)/(float)2.;
+
+	++num;	// since base 0
+	fnum=(float)num;
+	pDsize=Dsize/fnum;
+
+	xcent=Dx0+Dsize/(float)2.;	// will always center in X
+	Dy0=Dysep + ((float) position * (Dysep+Dsize));
+
+	if (position)
+		Dy0 += YSEP_INC * Dysep;	// so have extra space between 0 and targets.
+
+	/** Outline box in which things will be drawn **/
+	PATTERNset(0);
+	VGA_rect(Dx0+Dsize/(float)2.,Dy0+Dsize/(float)2.,Dsize,Dsize,1,BASE_COLOR);
+
+	switch(filled) {
+		case 0: fillpct = 1; break;
+		case 1: fillpct = .8; break;
+		case 2: fillpct = .6; break;
+		case 3: fillpct = .4; break;
+	}
+
+	col=color+FIRST_COLOR;
+
+	if (size == 0)
+		pct=9;
+	else
+		pct=9-(size*10/num_choices_per_category);
+
+	if (num_categories >= 6)
+		PATTERNset(pattern+1);
+
+	if (use_absolute_size) {
+		unit_size = (Dsize/(float)num_choices_per_category)*((float) pct/(float)10.);
+	}
+	else {	// relative to number of objects presented
+		unit_size = (Dsize*((float) pct/fnum/(float)10.));
+	}
+	fillsize= unit_size*fillpct;
+
+	fillcolor=BASE_COLOR;
+
+	for (n=0,ycent=Dy0+pDsize/(float)2.; n<num ;++n,ycent+=pDsize) {
+		switch(shape) {
+			case 0: VGA_rect(xcent,ycent,unit_size,unit_size,fillpct,col); break;
+			case 1: VGA_ellipse(xcent,ycent,unit_size,unit_size,fillpct,col); break;
+			default: VGA_reg_polygon(2*shape,xcent,ycent,unit_size/2,0,1,col); break;
+		}
+	}	
 }
 

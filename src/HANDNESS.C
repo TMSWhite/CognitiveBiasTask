@@ -19,22 +19,26 @@ static char *BriggsQuest[] = {
 	"12. To unscrew the lid of a jar",
 };
 
+static char	*Gets(char *buf);
+static void BlankLine(int y);
+
 int	GetName(void)
 {
 	int	ok=0;
 	int	len;
 	int	comma=-1;
 	FILE *id;
-	char	buf[15];
+	char	buf[80];
 	int	n;
 
-	_clearscreen(0);
-	printf("Neuropsychological Testing");
+	Cls();
+	sprintf(buf,"Neuropsychological Testing");
+	WriteAttrString(buf,(40 - strlen(buf)/2),1,TEXT_BOLD);
 
 	while(!ok) {
 		BlankLine(2);
-		printf("What is your full name? [last, first]:  ");
-		gets(user_name);
+		WriteAttrString("What is your full name? [last, first]: ",1,2,TEXT_NORMAL);
+		Gets(user_name);
 		len=strlen(user_name);
 		for (n=0;n<len;++n) {
 			if (!(isalnum(user_name[n]) || user_name[n] == ',' || user_name[n] == ' ' || user_name[n] == '-'))
@@ -53,11 +57,11 @@ int	GetName(void)
 
 	if (comma != -1) {
 		user_name[comma] = '\0';
-		datafile=strdup(user_name);
+		datafile=Strdup(user_name);
 		user_name[comma] = ',';
 	}
 	else
-		datafile=strdup(user_name);
+		datafile=Strdup(user_name);
 
 	/** Does file exist? If so, may not need to re-enter handedness info **/
 	for (n=0,len=strlen(datafile);n<len && n < 8;++n) {
@@ -99,13 +103,13 @@ void	GetHandednessInfo(void)
 	else
 		familyH[5] = 0;
 
-	_clearscreen(0);
-	puts("**On the remaining 12 questions, please indicate hand preference:**");
-	puts("  0 = Always Left");
-	puts("  1 = Usually Left");
-	puts("  2 = No Preference");
-	puts("  3 = Usually Right");
-	puts("  4 = Always Right");
+	Cls();
+	WriteAttrString("**On the remaining 12 questions, please indicate hand preference:**",1,1,TEXT_NORMAL);
+	WriteAttrString("  0 = Always Left",1,2,TEXT_NORMAL);
+	WriteAttrString("  1 = Usually Left",1,3,TEXT_NORMAL);
+	WriteAttrString("  2 = No Preference",1,4,TEXT_NORMAL);
+	WriteAttrString("  3 = Usually Right",1,5,TEXT_NORMAL);
+	WriteAttrString("  4 = Always Right",1,6,TEXT_NORMAL);
 
 	for (n=0;n<12;++n) {
 		indivH[n] = GetInt(n+8,BriggsQuest[n],0,4);
@@ -150,13 +154,14 @@ int	GetBool(int y, char *msg, char *choices)
 {
 	int	ok=0;
 	int	val;
-	char	buf[40];
+	char	buf[80];
 
 	while(!ok) {
 		BlankLine(y);
-		printf("%s? (%c/%c): ", msg, choices[0], choices[1]);
+		sprintf(buf,"%s? (%c/%c): ", msg, choices[0], choices[1]);
+		WriteAttrString(buf,1,y,TEXT_NORMAL);
 
-		if (!gets(buf))
+		if (!Gets(buf))
 			continue;
 		if (strlen(buf) == 0)
 			continue;
@@ -179,18 +184,19 @@ int	GetInt(int y, char *msg, int min, int max)
 	int	len;
 	int	n;
 	int	val;
-	char	buf[40];
+	char	buf[80];
 
 	while(!ok) {
 		BlankLine(y);
 		if (min < max) 
-			printf("%s? (%i-%i): ", msg, min, max);
+			sprintf(buf,"%s? (%i-%i): ", msg, min, max);
 		if (max < min) 
-			printf("%s? (>=%i): ", msg, min);
+			sprintf(buf,"%s? (>=%i): ", msg, min);
 		if (min == max) 
-			printf("%s?: ", msg);
+			sprintf(buf,"%s?: ", msg);
+		WriteAttrString(buf,1,y,TEXT_NORMAL);
 
-		if (!gets(buf))
+		if (!Gets(buf))
 			continue;
 		len=strlen(buf);
 		for (n=0;n<len;++n) {
@@ -212,25 +218,46 @@ int	GetInt(int y, char *msg, int min, int max)
 	return val;
 }
 
-void BlankLine(int y)
+char	*Gets(char *buf)
 {
-/**
-	union		REGS	reg;
-
-	CurMov(1,y);
-
-	reg.h.ah = 9;
-	reg.h.al = ' ';
-	reg.h.bl = 0x07;
-	reg.h.bh = 0;
-	reg.x.cx = 80;
-	int86(0x10,&reg,&reg);
-
-	CurMov(1,y);
-**/
+	short	count=0;
+	char	keystr[2];
+	short	key;
+	
+	keystr[1] = '\0';
+	
+	while(1) {
+		key = GetAKey();
+		keystr[0] = (char) key;
+		switch(key) {
+			case K_BACKSPACE:
+				if (count == 0)
+					break;
+				--count;
+				WriteAttrString(" ",-2,0, TEXT_NORMAL);
+				break;
+			case K_ESCAPE:
+				return "";
+			case K_RETURN:
+				buf[count] = '\0';
+				return buf;
+			default:
+				buf[count++] = (char) key;
+				WriteAttrString(keystr, 0, 0, TEXT_NORMAL);
+				break;
+		}
+	}
 }
 
-void	Cls(void){}
 
+void BlankLine(int y)
+{
+	char	blank[111];
+	
+	memset(blank,' ', 110);
+	blank[110] = '\0';
+	
+	WriteAttrString(blank,1,y,TEXT_NORMAL);
+}
 
 

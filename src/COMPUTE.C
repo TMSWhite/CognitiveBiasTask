@@ -1,72 +1,5 @@
 #include "cbt.h"
 
-/********************************************************************/
-/********************** Here is test stuff **************************/
-
-
-int	parse_args(int argc, char **argv)
-{
-	/** to make my life easier for adding stuff **/
-	char	type = *argv[1];
-	long	lcolor;
-	int	num_args;
-	int	n;
-
-	if (argc == 1)
-		goto usage_msg;
-
-	switch(type) {
-		case 'c':
-		case 'C':
-			/** Parse color codes **/
-			num_args=1;
-			for (n=num_args+1;n<argc;++n) {
-				if (n-num_args > 15)	// max of 16 colors
-					break;
-				if (sscanf(argv[n],"%8lxH",&lcolor) == 1) {
-					_palette[n-num_args] = lcolor;
-				}
-			}
-			CalibrateSaturation();
-			return 0;	// so that breaks out of main
-			break;
-		case 'r':
-		case 'R':
-			if (argc != 5)
-				goto usage_msg;
-			analysis_blocks=atoi(argv[2]);
-			RecomputeAnalysis(argv[3],argv[4]);
-			return 0;
-		case 'f':
-		case 'F':
-			num_args = 3;
-			if (!CONFIGread_file(argv[2]))
-				return 0;
-			if (source_file) {
-				if (!read_stimuli(source_file))
-					return 0;
-			}
-			else {
-				validate_args();
-				if (!init_arrays())
-					return 0;
-				if (!autocreate_stimuli())
-					return 0;
-			}
-			break;
-		default:	goto usage_msg;
-	}
-		
-	return 1;
-
-usage_msg:
-	printf("CBT program accepts these command line arguments:\n\n");
-	printf("\nCBT C [optional color codes]  - lets you calibrate the color saturation\n");
-	printf("\nCBT F config_file             - run experiment(s) according to config_file\n");
-	printf("\nCBT R num_blocks source dest  - recomputes statistics on .DAT file\n");
-
-	return 0;
-}
 
 void	RecomputeAnalysis(char *source, char *dest)
 {
@@ -516,7 +449,7 @@ int init_arrays(void)
 			break;
 		case INPUT_MOUSE_MVT:
 		case INPUT_MOUSE_BUT:
-			if (!mouseInit()) {
+			if (!INPUTsetup(INPUT_MOUSE)) {
 				if (verbose) {
 					printf("No mouse driver present\n");
 					return 0;
@@ -525,12 +458,13 @@ int init_arrays(void)
 			break;
 		case INPUT_JOY_MVT:
 		case INPUT_JOY_BUT:
-			if (!JoystickInit()) {
+			if (!INPUTsetup(INPUT_JOYSTICK)) {
 				printf("No joystick present\n");
 				return 0;
 			}
 			break;
 		case INPUT_USER_KEYS:
+#ifdef	USING_DOS
 			_user_keys = calloc(num_stimuli-1,sizeof(int));
 			if (!_user_keys)
 				goto out_of_memory;
@@ -541,6 +475,7 @@ int init_arrays(void)
 				_user_keys[n] = GetAKey();
 				printf("\n");
 			}
+#endif
 			break;
 	}
 
