@@ -222,7 +222,7 @@ int	show_instructions(void)
 		Gprint("INSTRUCTIONS",1,TEXT_CENTER,TEXT_HIGHLIGHTED);
 		Gprint("You will see cards that have different designs on them.  The designs",3,TEXT_LEFT,TEXT_NORMAL);
 		if (choice_type == CHOOSE_PREF_CONTROL) {
-			Gprint("may vary in several respects.  Of the cards shown, choose the one you",4,,TEXT_LEFT,TEXT_NORMAL);
+			Gprint("may vary in several respects.  Of the cards shown, choose the one you",4,TEXT_LEFT,TEXT_NORMAL);
 			Gprint("like the most.",5,TEXT_LEFT,TEXT_BOLD);
 		}
 		else {
@@ -300,9 +300,9 @@ int	show_instructions(void)
 				demo_bottom_select0="pressing GREY-ENTER key";
 				break;
 		}
-		Gprint("  select UPPER card by:",15,TEXT_LEFT,TEXT_NORMAL);
+		Gprint("  select UPPER card by:  ",15,TEXT_LEFT,TEXT_NORMAL);
 		Gprint(demo_top_select0,15,TEXT_NEXT,TEXT_NORMAL);
-		Gprint("  select LOWER card by:",16,TEXT_LEFT,TEXT_NORMAL);
+		Gprint("  select LOWER card by:  ",16,TEXT_LEFT,TEXT_NORMAL);
 		Gprint(demo_bottom_select0,16,TEXT_NEXT,TEXT_NORMAL);
 
 		Gprint("Press F1 for help", 25, TEXT_LEFT,TEXT_NORMAL);

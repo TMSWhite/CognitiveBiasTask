@@ -25,9 +25,9 @@ extern	short	SCREENmaxX, SCREENmaxY;
 #define WHITE				  15
 
 
-#define	TEXT_HIGHLIGHTED	0x70
-#define	TEXT_BOLD			0x0f
-#define	TEXT_NORMAL			0x07
+#define	TEXT_HIGHLIGHTED	LIGHTMAGENTA
+#define	TEXT_BOLD			YELLOW
+#define	TEXT_NORMAL			WHITE
 
 #define	TEXT_LEFT		0
 #define	TEXT_RIGHT		1

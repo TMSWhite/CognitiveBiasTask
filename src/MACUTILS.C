@@ -16,12 +16,7 @@
 
 
 /* Prototypes for internally used routines */
-/* This TEXT stuff is admittedly a hack at this point */
-//#define	TEXTSIZE	(SCREENmaxY/25)
-//#define	TEXTFONT geneva
-//#define	TEXTFACE bold
-#define	TEXTSIZE	(SCREENmaxY/divisor)
-#define	TEXTFONT	courier
+#define	TEXTFONT	geneva
 #define	TEXTFACE	normal
 #define	X_STEP	(SCREENmaxX / 80)
 #define	Y_STEP	(SCREENmaxY / 25)
@@ -100,7 +95,6 @@ short TIMERsetup(short on)
 	return 1;
 }
 
-/*
 void SCREENmode(short graphics)
 {
 	static short	init=0;
@@ -115,6 +109,9 @@ void SCREENmode(short graphics)
 	
 	
 	if (!init) {
+		short	divisor;
+		short	x;
+		char	*msg = "This is a test message.  What size characters are desired?";
 		init = 1;
 		  
 		black.red = black.green = black.blue = 0;
@@ -128,18 +125,20 @@ void SCREENmode(short graphics)
 		SetPort(myWindow);
 		RGBForeColor(&black);
 		RGBBackColor(&black);
-		TextSize(TEXTSIZE);
+		
 		TextFont(TEXTFONT);
 		TextFace(TEXTFACE);
-		SpaceExtra(3);
+		
+		for (divisor = 25; 1; ++divisor) {
+			TextSize(SCREENmaxY / divisor);
+			x = TextWidth(msg,0,strlen(msg));
+			if (x <= (strlen(msg) * X_STEP))
+				break;
+		} 		
 		
 		// Attempt at drawing to menu bar region 
 		fullRgn = NewRgn();		
 		RectRgn(fullRgn, &bounds);		
-
-// extern pascal UInt8 LMGetKbdLast( void )
-						
-
 	}
 	
 	switch(graphics) {
@@ -174,90 +173,7 @@ void SCREENmode(short graphics)
 			break;
 	}
 }
-*/
 
-void SCREENmode(short graphics)
-{
-	static short	init=0;
-	static RGBColor	black;
-	static	RgnHandle	fullRgn, oldGrayRgn;
-	Rect	bounds;
-	
-	if (graphics == SCREENmode_current)
-		return;
-		
-	SCREENmode_current = graphics;
-	
-	
-	if (!init) {
-		short	divisor = 25;
-		short	x;
-		char	*msg = "This is a test message.  It has several character sizes";
-		init = 1;
-		  
-		black.red = black.green = black.blue = 0;
-		
-		// Set up the window 
-		
-		bounds = qd.screenBits.bounds;
-		
-		myWindow = NewCWindow(nil, &bounds, "\p",
-			 FALSE, plainDBox, (WindowPtr)-1, false, 0L);
-		SetPort(myWindow);
-		RGBForeColor(&black);
-		RGBBackColor(&black);
-		
-		TextFont(TEXTFONT);
-		TextFace(TEXTFACE);
-		
-		for (divisor = 25; 1; ++divisor) {
-			TextSize(TEXTSIZE);
-			x = TextWidth(msg,0,strlen(msg));
-			if (x <= (strlen(msg) * X_STEP))
-				break;
-		} 		
-		
-		// Attempt at drawing to menu bar region 
-		fullRgn = NewRgn();		
-		RectRgn(fullRgn, &bounds);		
-	}
-	
-	switch(graphics) {
-		case 0:
-		case 1:
-//			HideMenuBar();
-			
-			// This is somewhat illegal, but allows drawing to the menubar region 
-//			oldGrayRgn = GetGrayRgn();
-//			LMSetGrayRgn(fullRgn);
-			
-//			HideCursor();
-						
-			SelectWindow(myWindow);
-			ShowWindow(myWindow);
-			EraseRect(&myWindow->portRect);
-			
-			SCREENmode_current = graphics;
-
-			
-			break;
-		case -1:
-			HideWindow(myWindow);
-			
-			// Restore the menubar region
-//			LMSetGrayRgn(oldGrayRgn);
-			
-//			ShowCursor();
-					
-//			ShowMenuBar();
-			
-//			break;
-//		case -1:
-			DisposeRgn(fullRgn);	// no longer need this region
-			DisposeWindow(myWindow);
-			break;
-	}
-}
 
 void Cls(void)
 {
@@ -311,49 +227,45 @@ char	*Time2str(void)
 	return buf;
 }
 
-void	WriteAttrString(char *msg, short x, short y, short style)
+
+void	Gprint(char *msg, short y, short xpos, short color)
 {
-	/* Needs changing! */
-	int	color;
-	char	blank[111];
+	static	short	cx=0, cy=0;
+	short	len;
 	
-	memset(blank,' ',110);
-	blank[110] = '\0';
+	len = TextWidth(msg,0,strlen(msg));
 	
 	if (SCREENmode_current != 1)
 		SCREENmode(1);
-	
-	switch(style) {
-		default:
-		case TEXT_NORMAL: color = WHITE; break;
-		case TEXT_BOLD: color = YELLOW; break;
-		case TEXT_HIGHLIGHTED: color = LIGHTMAGENTA; break;
-	}
-	
-	Gprint(x,y,msg,color);
-}
-
-void	Gprint(short x, short y, char *msg, short color)
-{
-	static	short	cx=0, cy=0;
-
-	x *= X_STEP;
-	y *= Y_STEP;
-	
-	if (x > 0)
-		cx = x;
-	if (x < 0)
-		cx += x;
-	if (y > 0)
-		cy = y;
-	if (y < 0)
-		cy += y;
-	
+		
 	VGAset_color(color);
+	
+	if (y)
+		cy = y * Y_STEP;
+		
+	switch(xpos) {
+		default:
+		case TEXT_LEFT:
+			cx = 1;
+			break;
+		case TEXT_RIGHT:
+			cx = SCREENmaxX - len;
+			break;
+		case TEXT_CENTER:
+			cx = (SCREENmaxX - len) / 2;
+			break;
+		case TEXT_NEXT:
+			break;	// use current cx
+		case TEXT_BACKSPACE:
+			cx -= len;
+			VGAset_color(BLACK);	// so that backspace works
+			break;
+	}
 	MoveTo(cx, cy);
 	DrawText(msg,0,strlen(msg));
 	
-	cx += (strlen(msg) * X_STEP);
+	if (xpos != TEXT_BACKSPACE)
+		cx += len;
 	
 	EVENTallow();
 }

@@ -232,7 +232,8 @@ char	*Gets(char *buf)
 				if (count == 0)
 					break;
 				--count;
-				Gprint(" ",0,TEXT_BACKSPACE,TEXT_NORMAL);
+				keystr[0] = buf[count];
+				Gprint(keystr,0,TEXT_BACKSPACE,TEXT_NORMAL);
 				break;
 			case K_ESCAPE:
 				return "";
@@ -257,5 +258,4 @@ void BlankLine(int y)
 	
 	Gprint(blank,y,TEXT_LEFT,TEXT_NORMAL);
 }
-
 
