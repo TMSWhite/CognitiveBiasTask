@@ -1,4 +1,3 @@
-#define	USING_MAC
 
 #ifdef USING_DOS
 
@@ -17,9 +16,9 @@
 #define K_F10				0x4400
 #define K_ENTER			0x1c0d
 #define	K_RETURN		0x1c0d
-#define	K_BACKSPACE		0x0000	// need to specify this!
+#define K_BACKSPACE     0x0e08
 
-#define	BASE_ASPECT_RATIO	(640/480)
+#define	BASE_ASPECT_RATIO	((float) 640/(float) 480)
 
 
 #endif
@@ -27,10 +26,19 @@
 #ifdef	USING_MAC
 
 #define K_ESCAPE        0x351b
+
+#define K_LEFTARROW     0x7b1c
+#define K_RIGHTARROW    0x7c1d
+#define K_UPARROW       0x7e1e
+#define K_DOWNARROW     0x7d1f
+
+/*  Macs don't have the keypad substitute for the arrow keys *
 #define K_LEFTARROW     0x5634
 #define K_RIGHTARROW    0x5836
 #define K_UPARROW       0x5b38
 #define K_DOWNARROW     0x5432
+*/
+
 #define K_PAGEUP        0x5c39
 #define K_PAGEDN        0x5533
 #define K_HOME          0x5937
@@ -43,7 +51,7 @@
 #define	K_RETURN		0x240d
 #define	K_BACKSPACE		0x3308
 
-#define	BASE_ASPECT_RATIO	(SCREENmaxX / SCREENmaxY)
+#define	BASE_ASPECT_RATIO	((float) SCREENmaxX / (float) SCREENmaxY)	// Macs use square pixels by default
 
 
 #endif

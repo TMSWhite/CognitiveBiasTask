@@ -35,7 +35,7 @@ int	GetName(void)
 
 	while(!ok) {
 		BlankLine(2);
-		Gprint("What is your full name?: ", 2,TEXT_LEFT,TEXT_NORMAL);
+		Gprint("What is your full name? (last, first): ", 2,TEXT_LEFT,TEXT_NORMAL);
 		Gets(user_name);
 		len=strlen(user_name);
 		for (n=0;n<len;++n) {
@@ -220,7 +220,7 @@ char	*Gets(char *buf)
 {
 	short	count=0;
 	char	keystr[2];
-	short	key;
+	unsigned	key;
 	
 	keystr[1] = '\0';
 	
@@ -236,7 +236,8 @@ char	*Gets(char *buf)
 				Gprint(keystr,0,TEXT_BACKSPACE,TEXT_NORMAL);
 				break;
 			case K_ESCAPE:
-				return "";
+				buf[0] = '\0';
+				return buf;
 			case K_RETURN:
 				buf[count] = '\0';
 				return buf;
@@ -249,13 +250,4 @@ char	*Gets(char *buf)
 }
 
 
-void BlankLine(int y)
-{
-	char	blank[111];
-	
-	memset(blank,' ', 110);
-	blank[110] = '\0';
-	
-	Gprint(blank,y,TEXT_LEFT,TEXT_NORMAL);
-}
 

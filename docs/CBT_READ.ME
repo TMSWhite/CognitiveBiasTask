@@ -1,0 +1,235 @@
+CBT (Cognitive Bias Task) Program Help File
+Thomas White
+twhite@koyasan.med.cornell.edu
+May 10,  1996
+
+A.  Running CBT- There are three ways to run CBT:
+     (1) CBT F <config_file>       - parses config_file and runs CBT
+		(this is how one actually runs a CBT experiment)
+     (2) CBT C [color codes]       - graphic modulation of color saturation
+		(this should be run at least once for each compter to adjust
+		the saturation of the colors- preliminary studies have
+		shown that subjects can be easily biased by color brightness,
+		so the brightness values need to be standardized)
+     (3) CBT R num_blocks <src> <dst> - re-analyze src datafile -> dst
+		(this allows former data files to be re-analyzed if new
+		graphs or other calculations are added to future releases
+		of the program)
+
+B.  Data file format:
+     There are three data files written for each experiment.  The
+base name is either specified by the datafile key in the config file,
+or, if verbose is set to 2, the base name is the subject's last name. 
+The three data files are base.txt, base.stm, and base.dat.
+     Base.txt is a text description of the stimuli like this:
+
+Trial   Color  Shape   Num  Size  Fill  Pattern
+    1     Red  Circle    1  0.50  0.8      N/A
+         Blue  Circle    2  1.00  0.8      N/A
+          Red  Circle    1  0.50  0.8      N/A
+    2    Blue  Square    2  1.00  1.0      N/A
+          Red  Circle    2  0.50  0.8      N/A
+         Blue  Square    1  1.00  1.0      N/A
+
+     Base.stm includes all the information needed to re-run an
+experiment using exactly the same stimuli as a previous trial.  This
+is the method used to specify the items for the original CBT task. An
+example of part of base.stm is below.  There are several necessary
+components:  (1) Information about the number and global
+characteristics of the trials (described in cbt.cfg), (2) color codes
+for balanced color saturation for a given monitor (described in
+cbt.cfg - will be different for each computer), (3) Complete
+description of the stimuli for each trial.  In this case, there are
+three stimuli (the initial cue followed by two choice stimuli), so
+there are three entries for each trial number.  Simce there are two
+choices per category, each category (color, shape, etc.) has the
+value of 0 or 1 (if there were trinary choices, these numbers would
+be 0-2.
+
+#Trials #Stimuli #Categories #Choices #MaxSame ms_btwn_stim ms_btwn_trials total_ms_on
+     60        3           5        2        5         2000           1000           0
+
+BckgColor BaseColor 1st_color 2nd_color 3rd_color 4th_color 5th_color
+   b0b0bH   151515H       20H   200000H       2aH   2a002aH     152aH
+
+ Trial#  Stim#  Color  Shape    Num   Size Filled Pattrn Match Item
+      1      0      0      1      0      1      1      0    -1   26
+      1      1      1      1      1      0      1      0     2   23
+      1      2      0      1      0      1      1      0     5   26
+      2      0      1      0      1      0      0      0    -1    5
+      2      1      0      1      1      1      1      0     1   30
+      2      2      1      0      0      0      0      0     4    1
+
+
+     Base.dat is the main data analysis file.  It includes the
+following information:
+     (1) Handedness info
+     
+Sex: 0
+Age: 29
+Years_ed: 22
+Familial Handedness: 0
+Briggs Handedness Score: 38
+  Family data: 0 0 0 0 1 0
+  Briggs data: 4 4 4 3 3 3 4 2 2 4 3 2
+
+     (2) Experiment description and subject's comments (if desired)
+
+Experiment Type: Preference
+Self-Eval: Subject's comments would be found here
+
+     (3) Data.stm information - see above - needed for data re-analysis.
+
+     (4) Table of selected responses (subject's choice):
+
+**RESPONSE DATA**
+ Trial#  Stim#  Color  Shape    Num   Size Filled Pattrn Match Item Min Max Time
+      1      1      1      1      1      0      1      0     2   23   2   5  366
+      2      2      1      0      0      0      0      0     4    1   1   4  263
+      3      1      1      0      1      0      0      0     1    5   1   3  326
+      4      1      0      1      1      1      1      0     0   30   0   5  243
+
+      This includes the Time (number of milliseconds for the
+response), and the min and max similarities between the choice
+stimuli and the initial cue.  Stim# is the position of the response. 
+Missed trials (in case there is a time limit for the response) has a
+Time value of 0 and a Match value of -1.
+
+     (5) Analysis of Quality of counter balancing of stimuli
+
+ Trial#  Stim#  Color  Shape    Num   Size Filled Pattrn Match Item
+
+Quality of CounterBalancing for all trials:
+sumInit      0     31     29     31     31     32      0
+sumOpts      0     56     60     70     58     66      0
+avgInit   0.00   0.52   0.48   0.52   0.52   0.53   0.00
+  zInit   0.00   0.26  -0.26   0.26   0.26   0.52   0.00
+avgOpts   0.00   0.47   0.50   0.58   0.48   0.55   0.00
+  zOpts   0.00  -0.73   0.00   1.83  -0.37   1.10   0.00
+ avgAll   0.00   0.48   0.49   0.56   0.49   0.54   0.00
+   zAll   0.00  -0.45  -0.15   1.64  -0.15   1.19   0.00
+Quality of CounterBalancing for for trials without exact matches:
+sumInit      0     23     21     18     19     19      0
+sumOpts      0     36     40     45     34     41      0
+avgInit   0.00   0.57   0.52   0.45   0.47   0.47   0.00
+  zInit   0.00   0.95   0.32  -0.63  -0.32  -0.32   0.00
+avgOpts   0.00   0.45   0.50   0.56   0.43   0.51   0.00
+  zOpts   0.00  -0.89   0.00   1.12  -1.34   0.22   0.00
+ avgAll   0.00   0.49   0.51   0.52   0.44   0.50   0.00
+   zAll   0.00  -0.18   0.18   0.55  -1.28   0.00   0.00
+
+     This is only valid for situations where num_choices = 2 since it
+is based off of the binomial distribution.  These numbers come from a
+computer generated CBT counterbalancing of 60 trials.  If each of the
+categories is totally random and evenly distributed, one would expect
+half of the items to be category 0, and half to be category 1.  Thus,
+the category values for any 60 trials should sum to 30.  The binomial
+distribution is used to assess whether the actual sum is
+significantly different from the expected value.
+     There are three general categories:  Init, Opts, and All.  Init
+refers to the cue stimuli, Opts to the choice stimuli, and All to all
+stimuli (Init + Opts).  sumInit is the sum of the category values (so
+should be 30), avgInit is sumInit/num_trials, so should be 50%, and
+zInit is the Z score of the the binomial Z test of avgInit compared
+with 50%.
+     The program also assesses the quality of the counterbalancing in
+the subset of the trials in which there are no exact matches between
+the choice stimuli and the initial cue.
+	When the program tries to auto-generate counterbalanced designs,
+it throws out those for which the absolute zAll for any criteria is
+greater than 0.8 (where 1.86 is statistically significant).  The
+values listed above happen to be those from the original CBT task.
+
+     (6) Numerical overview of subjects responses:
+
+All valid trials: 51
+  Chose     27     17     18     11     16     18      0
+ Out of     51     26     34     24     24     25      0
+BinaryZ   0.42   1.57   0.34  -0.41   1.63   2.20   0.00
+Score: 133 (min=70,max=189) = 52.94% (avg_rsp_time_sec: 0.235)
+
+	Since this version of CBT allows the researcher to specify a
+maximum allowable response time (total_ms_on), it is possible for
+subjects to miss some trials.  Thus, it is necessary to calculate the
+min and max possible CBT score.  The program presents the score as a
+percent in addition to a numerical value.
+	Like the Quality of CounterBalancing section, the BinaryZ is the
+Binomial distribution's assessment of the significance of the
+deviation of the subject's responses from pure randomness.  One
+additional constraint is that, for each category, only those trials
+for which there is a choice between two different members of that
+category (i.e. if both stimuli are red, then that trial is skipped in
+the color binaryZ calculation).  
+
+	(7) Graphical representation of subjects responses
+
+   alike| ********X*XX*X|**X**  * ******|**     *   XX* |  *X X*    *   |  28
+ SIMILAR|123456789012345|678901234567890|123456789012345|678901234567890|
+     not|*        X XX X|  X  ** *      |  ***** ***XX *|** X*X **** ***|  23
+        |(10/1): 2.71   |(11/3): 2.14   |(4/9):-1.39    |(3/10):-1.94   |  0.70
+        |CBT=29 (2,30)  |CBT=54 (34,61) |CBT=11 (3,39)  |CBT=39 (31,59) |CBT=133 (70,189)
+        |=96.4% (243ms) |=74.1% (238ms) |=22.2% (243ms) |=28.6% (217ms) |=52.9% (235ms)
+
+     top|** * * * X XX*X|* X **    * * *| ** * *** *XX**| **X X** *   * |  27
+POSITION|123456789012345|678901234567890|123456789012345|678901234567890|
+  bottom|  * * * *X*XX X| *X*  **** * * |*  * *   * XX  |*  X*X  * *** *|  24
+        |(6/5): 0.30    |(6/8):-0.53    |(9/4): 1.39    |(6/7):-0.28    |  0.42
+
+     red|        *X*XX*X|* X**   **     |   *  **** XX *|***X X         |  17
+   COLOR|123456789012345|678901234567890|123456789012345|678901234567890|
+    blue|   *  *  X XX X|  X    *  *    |    *      XX  |   X X * * * * |   9
+        |(3/2): 0.45    |(5/2): 1.13    |(6/1): 1.89    |(3/4):-0.38    |  1.57
+
+  square|  * **** X XX X|  X *    *  *  |      ** * XX  |* *X X * * ** *|  18
+   SHAPE|123456789012345|678901234567890|123456789012345|678901234567890|
+  circle|   *    *X XX*X|**X     *  *   | **  *  *  XX**| * X X* *      |  16
+        |(5/3): 0.71    |(3/4):-0.38    |(3/6):-1.00    |(7/3): 1.26    |  0.34
+
+     one|    *  * X XX X|  X   **   *   |  * **  *  XX  |  *X*X         |  11
+  NUMBER|123456789012345|678901234567890|123456789012345|678901234567890|
+     two|     *  *X XX*X|**X  *      *  |      ** **XX  |*  X X    *    |  13
+        |(2/3):-0.45    |(3/4):-0.38    |(4/4): 0.00    |(2/2): 0.00    | -0.41
+
+   large|     * **X XX X| *X ***        |       *** XX* |  *X*X***      |  16
+    SIZE|123456789012345|678901234567890|123456789012345|678901234567890|
+   small|*   * *  X XX X|* X            |*    *    *XX  | * X X         |   8
+        |(3/3): 0.00    |(4/1): 1.34    |(4/3): 0.38    |(5/1): 1.63    |  1.63
+
+   solid|  *   *  X XX*X|**X    ***   **|   *  * *  XX *| * X*X   *  *  |  18
+  FILLED|123456789012345|678901234567890|123456789012345|678901234567890|
+    open| *     **X XX X|  X            |    *    **XX  |   X X  *      |   7
+        |(3/3): 0.00    |(7/0): 2.65    |(4/3): 0.38    |(4/1): 1.34    |  2.20
+
+
+	The above are graphical representations of the subject's choices
+for each category.  In general, an 'X' indicates a missed trial, and
+an '*' indicates that the subject's choice for that category was of
+the type listed to the far left on that line (e.g. alike vs. not for
+SIMILAR).  The overall scores are listed to the far right, with the
+total for a given line listed to the right of the corresponding line
+(e.g. 28 and 23 for "alike" and "not" respectively).  The number
+directly below them is the binomial Z score for those numbers,
+assuming a totally random selection.  Finally, the line immediately
+below each category indicates the partial scores for each block.  In
+this case, the .cfg file requested that the sub-analysis be divided
+into quartiles ("analysis_blocks = 4").  This allows the assessment
+of trends in the data (e.g. one might select the most similar item
+100% of the time for the first 30 trials, and the least similar for
+the last 30 trials, giving an apparant net CBT score of 50%).  The
+format for these numbers is as follows:
+		"|(total_top/total_bottom): Z score |".
+	Thus, these graphs plot the subject's performance across all of
+the major categories: Position, Color, Shape, Number, Size, Filled. 
+In addition, there are some extra lines for the SIMILAR graph, since
+this relates to the CBT score.  For each quartile, as well as for the
+overall values to the far right, the CBT score is shown as follows:
+		"|CBT=raw_score (min_possible_score/max_possible_score) |"
+		"|=cbt_score_as_percent (average_reaction_time)         |"
+
+	Thus, the subject showed an overall preference for solid
+stimuli, especially during the 2nd quartile.  Further, although the
+overal CBT score was close to 50%, the subject showed a statistically
+significant preference for the "alike" stimuli during the first half
+of the experiment, and switched to a borderline significant
+preference for the "not" (dissimilar) stimuli during the second half
+of the experiment.

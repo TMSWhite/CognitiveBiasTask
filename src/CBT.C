@@ -3,7 +3,10 @@
 
 /***************** START OF CODE ************/
 
-#define	USING_MAC
+//#define	WHILE_WAITING	EVENTallow()
+#define	WHILE_WAITING
+
+static	short	GRAPHICSmode;
 
 void main(int argc, char **argv)
 {
@@ -14,7 +17,7 @@ void main(int argc, char **argv)
 
 	PALETTEsetup(_palette);
 	
-#ifdef	USING_MAC
+#ifdef	USING_MAC	// since can't pass command line arguments to Macs!
 	{
 		static	char *argv[] = { "Mac-CBT", "F", "cbt.cfg" };
 		int		argc = 2;
@@ -27,13 +30,18 @@ void main(int argc, char **argv)
 	}
 #endif
 
-	SCREENmode(1);
+	if (use_ega)
+		GRAPHICSmode = MODE_DOUBLE_BUFFER;
+	else
+		GRAPHICSmode = MODE_GRAPHICS;
+
+	SCREENmode(MODE_TEXT);
 	
 	if (verbose) {
 		char *title="CBT - Neuropsychological Testing";
 		char *to_start = "Press a key to begin";
 		Cls();
-		Gprint(title,12,TEXT_CENTER,TEXT_BOLD);
+		Gprint(title,12,TEXT_CENTER,TEXT_HIGHLIGHTED);
 		Gprint(to_start,14,TEXT_CENTER,TEXT_NORMAL);
 		GetAKey();
 	}
@@ -46,7 +54,8 @@ void main(int argc, char **argv)
 	}
 
 	/* For multi exps, assumes that you want to use exactly the same
-		order each time.  To re-order, run from scratch several times */
+		items each time, potentially in different orders.  To generate new
+		items, need to run from scratch several times */
 		
 	if (use_timer) {
 		if (!TIMERsetup(1)) {
@@ -56,11 +65,6 @@ void main(int argc, char **argv)
 			}
 		}
 	}
-
-	if (all_immediate) {	// what is this for?
-		TIMERzero_clock();
-	}
-
 
 	for (cycle=0;cycle<MAX_MULTI_EXP;++cycle) {
 		if (multi_exp[cycle] == CHOOSE_NOTHING)
@@ -85,8 +89,11 @@ void main(int argc, char **argv)
 	
 shutdown:
 
-	SCREENmode(0);
+	SCREENmode(MODE_TEXT);
 	cleanup();
+	
+	if (verbose) Gprint("Thank you", 12, TEXT_CENTER, TEXT_NORMAL);
+	
 	GRAPHICSsetup(0);
 	
 	if (use_timer) {
@@ -94,8 +101,6 @@ shutdown:
 			;
 		TIMERsetup(0);
 	}
-
-	if (verbose) printf("Thank you\n");
 }
 
 void	run_trials(void)
@@ -106,7 +111,7 @@ void	run_trials(void)
 	if (!show_instructions()) 
 		return;	// allows early abort via ESCAPE
 
-//	SCREENmode(1);
+	SCREENmode(GRAPHICSmode);
 
 	/* Must reset response arrays each time new exp is run **/
 	for (n=0;n<num_trials;++n){
@@ -114,18 +119,15 @@ void	run_trials(void)
 		_time[n]=0L;
 	}
 
-//	if (!immediacy) {	// what is this for?
-//		if (use_timer)
-//			TIMERzero_clock();
-//	}
 
 	for (trial_num=0;trial_num<num_trials;++trial_num) {
 		if (run_trial(0)==-1)	// ESCAPE pressed
 			break;
 	}
-//	if (!immediacy) {
-//		SCREENmode(0);
-//	}
+	
+	if (!immediacy)
+		SCREENmode(MODE_TEXT);
+
 
 	if (ask_awareness_of_patterns && (choice_type == CHOOSE_PREFERENCE || choice_type == CHOOSE_PREF_CONTROL)) {
 		if (GetBool(1,"Were you aware of any conscious pattern(s) to your preferences","ny")) {
@@ -196,10 +198,12 @@ int	parse_args(int argc, char **argv)
 	return 1;
 
 usage_msg:
-	printf("CBT program accepts these command line arguments:\n\n");
-	printf("\nCBT C [optional color codes]  - lets you calibrate the color saturation\n");
-	printf("\nCBT F config_file             - run experiment(s) according to config_file\n");
-	printf("\nCBT R num_blocks source dest  - recomputes statistics on .DAT file\n");
+	printf("CBT program accepts these command line arguments:\n");
+	printf("CBT C [optional color codes]  - lets you calibrate the color saturation\n");
+	printf("CBT F config_file             - run experiment(s) according to config_file\n");
+	printf("CBT R num_blocks source dest  - recomputes statistics on .DAT file\n");
+
+	GetAKey();
 
 	return 0;
 }
@@ -260,7 +264,11 @@ int	show_instructions(void)
 			Gprint("There are no \"correct\" or \"incorrect\" responses.  Your choice",8,TEXT_LEFT,TEXT_NORMAL);
 			Gprint("is entirely up to you.",9,TEXT_LEFT,TEXT_NORMAL);
 		}
-		Gprint("Please try to make your choices rather quickly.",11,TEXT_LEFT,TEXT_NORMAL);
+		Gprint("Please try to make your choices ",11,TEXT_LEFT,TEXT_NORMAL);
+		if (total_ms_on)
+			Gprint("before the cards disappear.", 11, TEXT_NEXT, TEXT_NORMAL);
+		else
+			Gprint("rather quickly.", 11, TEXT_NEXT, TEXT_NORMAL);
 
 		Gprint("When making selection,",14,TEXT_LEFT,TEXT_NORMAL);
 		switch(input_type) {
@@ -305,18 +313,17 @@ int	show_instructions(void)
 		Gprint("  select LOWER card by:  ",16,TEXT_LEFT,TEXT_NORMAL);
 		Gprint(demo_bottom_select0,16,TEXT_NEXT,TEXT_NORMAL);
 
-		Gprint("Press F1 for help", 25, TEXT_LEFT,TEXT_NORMAL);
+		Gprint("Press F1 for graphical help", 25, TEXT_LEFT,TEXT_NORMAL);
 		Gprint("Press SPACE to start", 25, TEXT_RIGHT,TEXT_BOLD);
 
 		while (!ok) {
 			i = GetAKey();
 			if (i == K_F1) {
-//				SCREENmode(1);
-//				if (use_timer)
-//					TIMERzero_clock();
+				SCREENmode(GRAPHICSmode);
+
 				while(run_trial(1)==0)
 					;
-//				SCREENmode(0);
+				SCREENmode(MODE_TEXT);
 				return show_instructions();
 			}
 			if (i == K_ESCAPE)
@@ -330,13 +337,13 @@ int	show_instructions(void)
 		GetAKey();
 	}
 
-//	SCREENmode(1);
+	SCREENmode(GRAPHICSmode);
 
 	if (!did_warmup && num_warmup_trials > 0) {
 		if (verbose_warmup) {
 			Gprint("Press SPACE to try a few practice rounds",12,TEXT_CENTER, WHITE);
 
-			if (use_ega)
+			if (SCREENdouble_buffer)
 				SCREENpage_flip(0);	// so displayed
 
 			while(1) {
@@ -344,21 +351,21 @@ int	show_instructions(void)
 				if (i == K_ESCAPE)
 					break;
 				if (i == K_F1) {
-//					if (use_timer)
-//						TIMERzero_clock();
-						
 					while(run_trial(1)==0)	// show graphical help
 						;
 
 				}
 
-				if ((char) i == ' ')
+				if ((char) i == ' ') 
 					break;
 			}
 		}
-//		if (use_timer)
-//			TIMERzero_clock();
-				
+		/* Should I allow ms_btwn_trials delay between time press space and first appearance? */
+		Cls();
+		MS_TIMERset(3,ms_btwn_trials);
+		while(MS_TIMERcheck(3))
+			WHILE_WAITING;	
+						
 		/* Require X answered trials in a row */
 		i=0;
 		do {
@@ -371,12 +378,12 @@ int	show_instructions(void)
 		did_warmup=1;
 
 		if (verbose_warmup) {
-			if (use_ega)
+			if (SCREENdouble_buffer)
 				SCREENpage_flip(0);	// so displayed
 			else
 				Cls();
 			Gprint("Great!  Now press SPACE to start experiment",12,TEXT_CENTER, WHITE);
-			if (use_ega)
+			if (SCREENdouble_buffer)
 				SCREENpage_flip(0);	// so displayed
 
 			while(1) {
@@ -388,6 +395,11 @@ int	show_instructions(void)
 			}
 		}
 	}
+	/* Should I allow ms_btwn_trials delay between time press space and first appearance? */
+	Cls();
+	MS_TIMERset(3,ms_btwn_trials);
+	while(MS_TIMERcheck(3))
+		WHILE_WAITING;
 	return 1;
 }
 
@@ -405,9 +417,9 @@ void	CalibrateSaturation(void)
 	num_stimuli=4;
 	num_choices_per_category=2;
 	num_categories=5;
-	use_ega=0;	// so that don't need to double buffer
+	SCREENdouble_buffer=0;	// so that don't need to double buffer
 
-	SCREENmode(1);
+	SCREENmode(GRAPHICSmode);
 
 	for (n=0;n<num_stimuli;++n)
 		draw(n,0,n,0,0,0,0);
@@ -426,7 +438,7 @@ void	CalibrateSaturation(void)
 		key = GetAKey();
 		switch(key) {
 			case K_ESCAPE:
-//				SCREENmode(0);
+				SCREENmode(MODE_TEXT);
 				Gprint("Palette values",1,TEXT_LEFT,TEXT_NORMAL);
 				for (n=0;n<(num_stimuli+2);++n) {
 					sprintf(buf,"color %2i:  %8lxH\n", n, _palette[n]);
@@ -526,14 +538,15 @@ int	run_trial(int demo)
 	long	times[3];
 	int	deltaX,deltaY,buttons;
 	char	buf[80];
-	int	tdemo[5][5];
+	int	tdemo[5][10];
 	int	tstim[5];
 	int	no_response=0;
-
+	int F1_init=0;
+	
 	here=trial_num*num_stimuli;
 
 	/** Clear screen and wait a period of time **/
-	if (use_ega)
+	if (SCREENdouble_buffer)
 		SCREENpage_flip(1);
 	else
 		Cls();
@@ -566,9 +579,9 @@ int	run_trial(int demo)
 
 	/** Wait until end of inter-trial interval, then draw stimulus **/
 
-	if (!use_ega)
+	if (!SCREENdouble_buffer)
 		while (MS_TIMERcheck(0) > 0L)
-			EVENTallow();
+			WHILE_WAITING;
 
 	if (choice_type != CHOOSE_PREF_CONTROL) {
 		if (demo) {
@@ -581,9 +594,9 @@ int	run_trial(int demo)
 			draw(0,_shape[here],_color[here],_num[here],_size[here],_filled[here],_pattern[here]);
 	}
 
-	if (use_ega) {
+	if (SCREENdouble_buffer) {
 		while (MS_TIMERcheck(0) > 0L)
-			EVENTallow();
+			WHILE_WAITING;
 		SCREENpage_flip(0);
 	}
 
@@ -597,12 +610,12 @@ int	run_trial(int demo)
 		MS_TIMERset(1,0);	// no first item for CHOICE_PREF
 	}
 
-	if (!use_ega)
+	if (!SCREENdouble_buffer)
 		while(MS_TIMERcheck(1) > 0L)
-			EVENTallow();
+			WHILE_WAITING;
 
 	if (demo) {
-		if (use_ega && choice_type != CHOOSE_PREF_CONTROL) 
+		if (SCREENdouble_buffer && choice_type != CHOOSE_PREF_CONTROL) 
 			draw(0,tdemo[0][0],tdemo[0][1],tdemo[0][2],tdemo[0][3],tdemo[0][4],0);
 		for (n=1;n<num_stimuli;++n)
 			draw(n,tdemo[n][0],tdemo[n][1],tdemo[n][2],tdemo[n][3],tdemo[n][4],0);
@@ -616,7 +629,7 @@ int	run_trial(int demo)
 		}
 	}
 	else {
-		if (use_ega && choice_type != CHOOSE_PREF_CONTROL)
+		if (SCREENdouble_buffer && choice_type != CHOOSE_PREF_CONTROL)
 			n=0;
 		else
 			n=1;
@@ -625,9 +638,9 @@ int	run_trial(int demo)
 				_filled[here],_pattern[here]);
 	}
 
-	if (use_ega) {
+	if (SCREENdouble_buffer) {
 		while(MS_TIMERcheck(1) > 0L)
-			EVENTallow();
+			WHILE_WAITING;
 		SCREENpage_flip(0);
 	}
 
@@ -640,7 +653,6 @@ int	run_trial(int demo)
 	/** Wait for reaction **/
 	while(1) {
 		if (demo == 1) {
-			static int F1_init=0;
 			if (!F1_init) {	// give 7 seconds of extra time
 				MS_TIMERset(3,7000);
 				F1_init = 1;
@@ -649,12 +661,12 @@ int	run_trial(int demo)
 				// if no response by then, tell what needs to be done
 				char *msg = "Please make a choice to show that you understand";
 				Gprint(msg,15,TEXT_CENTER,LIGHTMAGENTA);
-				if (use_ega)
+				if (SCREENdouble_buffer)
 					SCREENpage_flip(0);
 				MS_TIMERset(3,2000);
 				while(MS_TIMERcheck(3) > 0L)
-					EVENTallow();
-				F1_init=0;	// in case want to see demo again
+					WHILE_WAITING;
+				TIMERzero_clock();	// do I want to do this here?
 				return 0;	// so know to try this again.
 			}
 		}
@@ -667,8 +679,11 @@ int	run_trial(int demo)
 			/** Allow early abort, but wait appropriate amount of time **/
 			key=GetAKey();
 			if (key == K_ESCAPE) {
+				/* Why do I need to wait? 
 				while(MS_TIMERcheck(2) > 0L)
-					;
+					WHILE_WAITING;
+				*/
+				TIMERzero_clock();
 				MS_TIMERset(0,ms_btwn_trials);
 				return -1;
 			}
@@ -792,7 +807,7 @@ int	run_trial(int demo)
 
 error_key:
 		if (beep_on_error_key)
-			Gprint("\a",1,TEXT_LEFT,TEXT_NORMAL);
+			Beep();
 	}
 
 setup_next_trial:
@@ -800,12 +815,14 @@ setup_next_trial:
 	_time[trial_num]=(times[2]-times[1]);
 
 	while(MS_TIMERcheck(2) > 0L)
-		EVENTallow();
+		WHILE_WAITING;
+		
+	TIMERzero_clock();		// is this a good place for this?
 	MS_TIMERset(0,ms_btwn_trials);
 
 	/** Show which was most similar **/
 	if (mark_correct) {
-		if (use_ega) {
+		if (SCREENdouble_buffer) {
 			if (demo) {
 				int	n,max,val,max_id;
 				if (choice_type != CHOOSE_PREF_CONTROL) 
@@ -835,7 +852,7 @@ setup_next_trial:
 		}
 		MS_TIMERset(3,50);
 		while(MS_TIMERcheck(3) > 0L)
-			EVENTallow();
+			WHILE_WAITING;
 	}
 	return (!no_response);
 }
@@ -855,11 +872,12 @@ void draw(int position, int shape, int color, int num, int size, int filled,int 
 	float	fillsize;
 	int	fillcolor;
 	int	pct;
-	float	aspect_ratio;
-	
-	aspect_ratio = (SCREENmaxX/SCREENmaxY)/BASE_ASPECT_RATIO;
+
+	/*	Only needed when using MAC monitor to run DOS program, so never
+	SCREENaspect_ratio = (SCREENmaxX/SCREENmaxY)/BASE_ASPECT_RATIO;
 	if (force_aspect_ratio)
-		aspect_ratio=force_aspect_ratio;
+		SCREENaspect_ratio=force_aspect_ratio;
+	*/
 
 	Dsize = SCREENmaxY /((float) num_stimuli + YSEP_PCT * ((float) num_stimuli+(float)1.+YSEP_INC));
 	Dysep = (YSEP_PCT * Dsize);

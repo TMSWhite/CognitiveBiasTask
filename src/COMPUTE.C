@@ -64,8 +64,6 @@ void	validate_args(void)
 		trials_per_block+=n;
 
 	if (num_trials < 0) {
-		int	n;
-
 		analysis_blocks=(-num_trials*2);
 
 		times_counterbalanced=(-num_trials);
@@ -406,7 +404,7 @@ int	CheckSameness(int item1, int item2)
 	return count;
 }
 
-void	RevItemVal(int item, int *array)
+void	RevItemVal(int item, int array[10])
 {
 	int	n;
 	int	mul=max_item_num/num_choices_per_category;
@@ -416,6 +414,10 @@ void	RevItemVal(int item, int *array)
 		item-=(array[n] * mul);
 	}
 	array[0]=item;
+	
+	/* zero any unused parameter fields */
+	for (n=num_categories;n<10;++n)
+		array[n] = 0;
 }
 
 

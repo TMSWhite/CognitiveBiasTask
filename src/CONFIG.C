@@ -109,7 +109,7 @@ int	CBTparse(int index, int argc, char **argv)
 		case 26:
 			all_immediate = 1;
 			for (n=0;n<argc && n < MAX_MULTI_EXP; ++n) {
-				immediate_start[n] = atoi(argv[0]);
+				immediate_start[n] = atoi(argv[n]);
 				BOUNDED(immediate_start[n],0,1);
 				all_immediate = (all_immediate && immediate_start[n]);
 			}
@@ -132,7 +132,6 @@ static	int	CONFIGerrs;
 
 int	CONFIGread_file(char *config_file)
 {
-	register	int	n;
 	char	*slist[2];
 	char	**s = &slist[1];
 
@@ -333,6 +332,7 @@ int CONFIGisentry(char *string, int num_entries, char **entries)
 	return -1;
 }
 
+#ifdef	USING_MAC
 
 int	Stricmp(char *x, char *y)
 {
@@ -358,3 +358,5 @@ cleanup:
 		free(b);
 	return n;
 }
+
+#endif

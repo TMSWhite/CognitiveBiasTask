@@ -2,10 +2,25 @@
 /** THESE ARE THE PLATFORM DEPENDENT FUNCTIONS **/
 /************************************************/
 
+typedef	unsigned char	uchar;
+typedef	unsigned int	uint;
+typedef	char	*	pchar;
+typedef	int	*	pint;
+typedef	long	*	plong;
+typedef	float	*	pfloat;
+
+
 extern	short	SCREENmaxX, SCREENmaxY;
+extern	short	SCREENdouble_buffer;
+//extern	float	SCREENaspect_ratio;
 
 #define	INPUT_MOUSE		1
 #define	INPUT_JOYSTICK	2
+
+/** Using palette of max 16 colors.  Setting to EGA type default **/
+#define	BCKG_COLOR	0
+#define	BASE_COLOR	1
+#define	FIRST_COLOR	2
 
 #define BLACK 				   0
 #define BLUE				   1
@@ -36,6 +51,8 @@ extern	short	SCREENmaxX, SCREENmaxY;
 #define	TEXT_BACKSPACE	4
 
 void	Gprint(char *msg, short y, short xpos, short color);
+void BlankLine(int y);
+void	Beep(void);
 
 
 short	GRAPHICSsetup(short on);
@@ -46,6 +63,12 @@ long	TIMERget_ms(void);
 void	TIMERzero_clock(void);
 char	*Time2str(void);
 char	*Date2str(void);
+
+#define	MODE_DOUBLE_BUFFER	2
+#define	MODE_GRAPHICS		1
+#define	MODE_TEXT			0
+#define	MODE_CLEANUP		-1
+
 void	SCREENmode(short graphics);
 int		VGA_reg_polygon(int num_sides, float cent_x, float cent_y,float radius, float degrees, int filled, int color);
 int		VGA_rect(float cent_x, float cent_y, float size_x, float size_y, float fill_pct, int color);

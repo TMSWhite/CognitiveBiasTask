@@ -1,7 +1,10 @@
+#ifndef	USING_DOS
 /** Routines for allocating a full screen window **/
 #include <stdio.h>	// only for printf
 #include <stdlib.h>	// only for malloc
 #include <math.h>	// for DRAW functions
+
+#include "utils.h"
 
 #include <CursorDevices.h>
 #include <QuickTimeComponents.h>
@@ -10,12 +13,9 @@
 #include <Types.h>
 #include <string.h>	// for strlen
 
-#include "utils.h"
-
-#define	USING_MAC
-
-
 /* Prototypes for internally used routines */
+
+#define	TEXTSIZE	(SCREENmaxY/TEXTysize_divisor)
 #define	TEXTFONT	geneva
 #define	TEXTFACE	normal
 #define	X_STEP	(SCREENmaxX / 80)
@@ -31,11 +31,13 @@ static ComponentInstance	msClock;
 static	short		mBarHigh;
 static	WindowPtr	myWindow;
 static	TimeRecord	Time0;
-static	short	SCREENmode_current=0;
+static	short	SCREENmode_current=MODE_CLEANUP;
+static	short	TEXTysize_divisor;
 
 /* Globally accessible routines */
 
 short	SCREENmaxX, SCREENmaxY;
+short	SCREENdouble_buffer=0;
 
 
 short GRAPHICSsetup(short on)
@@ -49,10 +51,11 @@ short GRAPHICSsetup(short on)
 		InitDialogs(NULL);
 		InitCursor();
 		FlushEvents(everyEvent, 0);
+		SCREENdouble_buffer = (on-1);
 	}
 	else {
-		SCREENmode(0);
-		SCREENmode(-1);
+		SCREENmode(MODE_TEXT);
+		SCREENmode(MODE_CLEANUP);
 	}
 	SCREENmaxX = (qd.screenBits.bounds.right - qd.screenBits.bounds.left);
 	SCREENmaxY = (qd.screenBits.bounds.bottom - qd.screenBits.bounds.top);	
@@ -95,23 +98,29 @@ short TIMERsetup(short on)
 	return 1;
 }
 
-void SCREENmode(short graphics)
+
+void SCREENmode(short mode)
 {
 	static short	init=0;
 	static RGBColor	black;
 	static	RgnHandle	fullRgn, oldGrayRgn;
 	Rect	bounds;
 	
-	if (graphics == SCREENmode_current)
+	if (mode == SCREENmode_current)
 		return;
 		
-	SCREENmode_current = graphics;
+	if (init && mode != MODE_CLEANUP) {
+		SCREENmode_current = mode;
+		Cls();
+		return;
+	}
+		
+	SCREENmode_current = mode;
 	
 	
 	if (!init) {
-		short	divisor;
-		short	x;
-		char	*msg = "This is a test message.  What size characters are desired?";
+		short	len;
+		char	*test = "This is a test message.  What sort of lenght does it need?";
 		init = 1;
 		  
 		black.red = black.green = black.blue = 0;
@@ -125,24 +134,29 @@ void SCREENmode(short graphics)
 		SetPort(myWindow);
 		RGBForeColor(&black);
 		RGBBackColor(&black);
-		
 		TextFont(TEXTFONT);
 		TextFace(TEXTFACE);
 		
-		for (divisor = 25; 1; ++divisor) {
-			TextSize(SCREENmaxY / divisor);
-			x = TextWidth(msg,0,strlen(msg));
-			if (x <= (strlen(msg) * X_STEP))
+		for (TEXTysize_divisor=25;1;++TEXTysize_divisor) {
+			TextSize(SCREENmaxY / TEXTysize_divisor);
+			len = TextWidth(test,0,strlen(test));
+			if (len <= (strlen(test) * X_STEP))
 				break;
-		} 		
+		}
 		
 		// Attempt at drawing to menu bar region 
 		fullRgn = NewRgn();		
 		RectRgn(fullRgn, &bounds);		
+
+// extern pascal UInt8 LMGetKbdLast( void )
+						
+
 	}
 	
-	switch(graphics) {
-		case 1:
+	switch(mode) {
+		case MODE_TEXT:
+		case MODE_DOUBLE_BUFFER:
+		case MODE_GRAPHICS:
 			HideMenuBar();
 			
 			// This is somewhat illegal, but allows drawing to the menubar region 
@@ -156,7 +170,8 @@ void SCREENmode(short graphics)
 			EraseRect(&myWindow->portRect);
 			
 			break;
-		case 0:
+		case MODE_CLEANUP:	
+//		case MODE_TEXT:
 			HideWindow(myWindow);
 			
 			// Restore the menubar region
@@ -166,8 +181,8 @@ void SCREENmode(short graphics)
 					
 			ShowMenuBar();
 			
-			break;
-		case -1:
+//			break;
+//		case MODE_CLEANUP:
 			DisposeRgn(fullRgn);	// no longer need this region
 			DisposeWindow(myWindow);
 			break;
@@ -177,10 +192,8 @@ void SCREENmode(short graphics)
 
 void Cls(void)
 {
-	if (SCREENmode_current == 1)
+	if (SCREENmode_current >= MODE_TEXT)
 		EraseRect(&myWindow->portRect);
-	else
-		printf("\n\n");
 }
 
 
@@ -235,8 +248,8 @@ void	Gprint(char *msg, short y, short xpos, short color)
 	
 	len = TextWidth(msg,0,strlen(msg));
 	
-	if (SCREENmode_current != 1)
-		SCREENmode(1);
+	if (SCREENmode_current == MODE_CLEANUP)
+		SCREENmode(MODE_GRAPHICS);
 		
 	VGAset_color(color);
 	
@@ -258,7 +271,10 @@ void	Gprint(char *msg, short y, short xpos, short color)
 			break;	// use current cx
 		case TEXT_BACKSPACE:
 			cx -= len;
-			VGAset_color(BLACK);	// so that backspace works
+			{ RGBColor	c;
+				c.red = c.green = c.blue = 0;
+				RGBForeColor(&c);
+			}
 			break;
 	}
 	MoveTo(cx, cy);
@@ -268,6 +284,20 @@ void	Gprint(char *msg, short y, short xpos, short color)
 		cx += len;
 	
 	EVENTallow();
+}
+
+
+void BlankLine(int y)
+{
+	Rect	r;
+	
+	r.bottom = (y * Y_STEP);
+	r.top = r.bottom - TEXTSIZE;
+	r.bottom = r.top + Y_STEP;
+	r.left = 0;
+	r.right = SCREENmaxX;
+	
+	EraseRect(&r);
 }
 
 /************************/
@@ -336,8 +366,8 @@ void HideMenuBar (void)
 	
 	if (LMGetMBarHeight() != 0)	// only hide if not hidden
 	{
-			// First, we¹re going to save a pointer to the old
-			// port and create a temporary ³scratch port² in 
+			// First, we¼re going to save a pointer to the old
+			// port and create a temporary „scratch port¾ in 
 			// which to define our regions and paint over the
 			// menu bar.
 
@@ -359,7 +389,7 @@ void HideMenuBar (void)
 			// familiar rounded rectangle of the main monitor.
 			// In cases with multiple monitors, the global
 			// qd.screenBits will be the one with the menu bar...
-			// The one whose region we¹re concerned with 
+			// The one whose region we¼re concerned with 
 			// imitating.
 
 		theRect = (**GetGrayRgn()).rgnBBox;
@@ -369,8 +399,8 @@ void HideMenuBar (void)
 		FrameRoundRect(&theRect, 16, 16);
 		CloseRgn(worldRgn);		// just defined the screen 
 		
-			// Although the region we¹ve just defined represents
-			// the entire monitor with the menu bar, we¹re going
+			// Although the region we¼ve just defined represents
+			// the entire monitor with the menu bar, we¼re going
 			// to trim this down to a region that represents
 			// just the menu bar -- the top strip of the screen.
 
@@ -389,7 +419,7 @@ void HideMenuBar (void)
 		DisposeRgn(worldRgn);		// no longer need this region
 		
 			// Now that we have our menu bar region, we need to 
-			// add it to our temporary ports¹ visRgn. In this
+			// add it to our temporary ports¼ visRgn. In this
 			// way we can use QuickDraw to paint over it.
 
 		UnionRgn(tempPort->visRgn, 
@@ -448,15 +478,15 @@ void ShowMenuBar (void)
 		SectRgn(worldRgn, menuBarRgn, menuBarRgn);	
 		DisposeRgn(worldRgn);
 
-			// Once again we add it to our tempPort¹s visRgn
+			// Once again we add it to our tempPort¼s visRgn
 
 		UnionRgn(tempPort->visRgn, 
 				menuBarRgn, 
 				tempPort->visRgn);
 
-			// But this time we ³subtract² the menu bar region
-			// from the tempPort¹s visRgn -- in this way, the
-			// menu bar is removed and thus can¹t be drawn over.
+			// But this time we „subtract¾ the menu bar region
+			// from the tempPort¼s visRgn -- in this way, the
+			// menu bar is removed and thus can¼t be drawn over.
 
 		DiffRgn(tempPort->visRgn, menuBarRgn, tempPort->visRgn);
 		DisposeRgn(menuBarRgn);
@@ -465,7 +495,7 @@ void ShowMenuBar (void)
 		SetPort((GrafPtr)wasPort);
 		
 			// At this point, all is well and good, but the Mac
-			// hasn¹t got around to drawing the menu bar. We need
+			// hasn¼t got around to drawing the menu bar. We need
 			// to tell it to do so.
 
 		DrawMenuBar();
@@ -826,3 +856,10 @@ void	EVENTflush_all(void)
 {
 	FlushEvents(everyEvent, 0);
 }
+
+void	Beep(void)
+{
+	SysBeep(1);
+}
+
+#endif	// USING_DOS

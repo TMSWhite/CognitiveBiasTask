@@ -9,6 +9,17 @@
 #include <math.h>
 #include <ctype.h>
 
+#ifndef	USING_DOS
+	// since can't use command line compiler argument readily on Macs
+	#define	USING_MAC
+	/* Non-ANSI functions */
+	int	Stricmp(char *x, char *y);
+	#define	Strdup(x) (strcpy((char *)malloc(strlen(x)+1),(x)))
+#else
+	#define	Strdup(x)	strdup(x)
+	#define	Stricmp(x,y)	stricmp((x),(y))
+#endif
+
 #include "keycodes.h"
 #include "utils.h"
 
@@ -16,16 +27,6 @@
 /** General prototypes **/
 /************************/
 
-typedef	unsigned char	uchar;
-typedef	unsigned int	uint;
-typedef	char	*	pchar;
-typedef	int	*	pint;
-typedef	long	*	plong;
-typedef	float	*	pfloat;
-
-/* Non-ANSI functions */
-int	Stricmp(char *x, char *y);
-#define	Strdup(x) (strcpy((char *)malloc(strlen(x)+1),(x)))
 
 
 /********* FUNCTION PROTOTYPES **********/
@@ -65,7 +66,7 @@ int	CounterBalance(void);
 void	RandomizeStim(void);
 int	NextStim(int index,int stim_left);
 int	CheckSameness(int item1, int item2);
-void	RevItemVal(int item, int *array);
+void	RevItemVal(int item, int array[10]);
 int	show_instructions(void);
 
 int	MS_TIMERset(int id, long ms);
@@ -74,7 +75,6 @@ long	MS_TIMERcheck(int id);
 int	GetBool(int y, char *msg, char *choices);
 int	GetInt(int y, char *msg, int min, int max);
 char	*Gets(char *buf);
-void BlankLine(int y);
 
 void	CalibrateSaturation(void);
 void	Long2RGB(long lcolor, char *r, char *g, char *b);
@@ -99,11 +99,6 @@ int CONFIGisentry(char *string, int num_entries, char **entries);
 #define	BUF_LEN	250
 
 #define	MAX_MATCHES	(max_same_categories+1)
-
-/** Using palette of max 16 colors.  Setting to EGA type default **/
-#define	BCKG_COLOR	0
-#define	BASE_COLOR	1
-#define	FIRST_COLOR	2
 
 #define	MAX_CATEGORIES	6
 #define	MAX_CHOICES_PER_CATEGORY 6
@@ -256,13 +251,5 @@ extern int	years_ed;
 extern float Dsize;	// square size of overall stimulus presentation
 extern float	Dysep;	// separation between stimuli
 extern float	Dx0;
-
-extern char	vertical[8];
-extern char	diagonal[8];
-extern char	horizontal[8];
-extern char	spotted[8];
-extern char	arrows[8];
-extern char	crosshash[8];
-extern char	waterhash[8];
 
 extern int	unit;

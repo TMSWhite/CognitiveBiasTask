@@ -110,12 +110,4 @@ float Dsize;	// square size of overall stimulus presentation
 float	Dysep;	// separation between stimuli
 float	Dx0;
 
-char	vertical[8] = { h(CC), h(CC), h(CC), h(CC), h(CC), h(CC), h(CC), h(CC) };
-char	diagonal[8] = { h(99), h(33), h(66), h(CC), h(99), h(33), h(66), h(CC) };
-char	horizontal[8] = { h(FF), h(00), h(FF), h(00), h(FF), h(00), h(FF), h(00) };
-char	spotted[8] = { h(00), h(66), h(66), h(00), h(00), h(66), h(66), h(00) };
-char	arrows[8] = { h(CC), h(66), h(33), h(99), h(99), h(33), h(66), h(CC) };
-char	crosshash[8] = { h(22), h(55), h(88), h(55), h(22), h(55), h(88), h(55) };
-char	waterhash[8] = { h(88), h(55), h(22), h(00), h(88), h(55), h(22), h(00) };
-
 int	unit=1;

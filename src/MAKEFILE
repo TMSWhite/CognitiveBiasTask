@@ -1,19 +1,21 @@
-all: MINI.exe
+all: CBT.exe
 
-CFLAGS=-c /W3 /AL /G2 /Gs /Od
+CFLAGS=-c -W3 -AL -G2 -Ot -Oi -Ol -On -Og -Oc -Gs -DUSING_DOS
 
 LIBS=oldnames+llibce+graphics
 LFLAGS=/BATCH /NOD /FAR /PACKC /NOE
 LINKER=link
 
 
-OBJS  = MINI.obj
+OBJS  = CBT.obj ANALYZE.obj COMPUTE.obj CONFIG.obj DOSUTILS.obj \
+	EXTERN.obj HANDNESS.obj 
 
-MINI.exe: $(OBJS)
-	@$(LINKER) @<<MINI.lrf
+CBT.exe: $(OBJS)
+	@$(LINKER) @<<CBT.lrf
 $(OBJS: =+^
 )
-MINI $(LFLAGS) /ST:15000
-MINI
+CBT $(LFLAGS) /ST:15000
+CBT
 $(LIBS);
 <<NOKEEP
+

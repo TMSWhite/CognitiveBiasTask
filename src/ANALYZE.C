@@ -273,6 +273,8 @@ void	calc_matches(void)
 	for (n=0,here=0;n<num_trials;++n) {
 		num_similar=0;
 		_matches[here]=-1;	// to indicate that the reference position
+		
+//		BOUNDED(_pattern[here],0,MAX_PATTERNS-1);
 
 		for (i=1,++here,max=0,min=num_categories;i<num_stimuli;++i,++here) {
 			num_matches=0;
@@ -280,6 +282,9 @@ void	calc_matches(void)
 				if (*GetOption(here,k)==*GetOption(here-i,k))
 					++num_matches;
 			}
+			
+//			BOUNDED(_pattern[here],0,MAX_PATTERNS-1);
+
 			if (_matches[here] != num_matches) {
 //				if (verbose) printf("Num_matches for trial %i says %i.  Should be %i.  Setting it so.\n",
 //					n+1,_matches[here],num_matches);
@@ -408,7 +413,6 @@ void	analyze(char *dest, int time_now)
 	int	n,i;
 	int	here;
 	int	count;
-	char	buf[20];
 
 	/** Now store the results for further analysis **/
 	if ((id=fopen(dest,"a")) == (FILE *) 0) {
